@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Backgrounds */
+  --color-bg-primary: #090d16;
+  --color-bg-surface: #0f172a;
+  --color-bg-elevated: #1e293b;
+
+  /* Telemetry / Accent */
+  --color-telemetry-accent: #38bdf8;
+  --color-telemetry-secondary: #818cf8;
+  --color-telemetry-success: #22c55e;
+  --color-telemetry-warning: #f59e0b;
+  --color-telemetry-danger: #ef4444;
+
+  /* Typography */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "Cascadia Code", monospace;
+}
+
+/* --- Base Styles --- */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #090d16;
+  color: #f8fafc;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: #38bdf8;
+  color: #090d16;
+}
+
+/* --- Reduced Motion --- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- Utility Animations --- */
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
