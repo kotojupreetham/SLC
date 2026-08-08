@@ -52,6 +52,7 @@ const WEDGE_PATH =
 
 export function InteractivePipeline() {
   const [isActivated, setIsActivated] = useState(false);
+  const [hasCompletedRotation, setHasCompletedRotation] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -77,7 +78,7 @@ export function InteractivePipeline() {
         x: isMobile ? 0 : 280,
         y: isMobile ? 140 : 0,
       });
-      gsap.set(centerTextRef.current, { opacity: 0, y: 20 });
+      gsap.set(centerTextRef.current, { opacity: 0, y: 30 });
       gsap.set(telemetryBarRef.current, { opacity: 0, y: -20 });
       gsap.set(laserRef.current, { opacity: 0 });
     }, wrapperRef);
@@ -87,20 +88,18 @@ export function InteractivePipeline() {
 
   // --- HANDLE CLICK TO ACTIVATE ---
   const handleActivate = useCallback(() => {
-    if (isActivated) return;
+    // Reset completion flag if user re-triggers explicitly
+    setHasCompletedRotation(false);
+    setIsActivated(true);
 
     if (wrapperRef.current) {
       wrapperRef.current.scrollIntoView({ behavior: "smooth" });
     }
-
-    setTimeout(() => {
-      setIsActivated(true);
-    }, 350);
-  }, [isActivated]);
+  }, []);
 
   // --- ACTIVATION EFFECT: Expand wheel + create ScrollTrigger ---
   useEffect(() => {
-    if (!isActivated) return;
+    if (!isActivated || hasCompletedRotation) return;
     if (typeof window === "undefined") return;
 
     originalOverflowRef.current = document.body.style.overflow;
@@ -163,6 +162,12 @@ export function InteractivePipeline() {
             end: "+=4800",
             pin: stickyRef.current,
             scrub: 0.8,
+            once: true, // Run rotation path ONCE, then permanently unpin
+            onLeave: () => {
+              // Rotation finished: unpin circle, reset state, and allow free normal scrolling
+              setHasCompletedRotation(true);
+              setIsActivated(false);
+            },
             snap: {
               snapTo: 1 / (totalStages + 1),
               duration: { min: 0.2, max: 0.45 },
@@ -250,7 +255,7 @@ export function InteractivePipeline() {
       document.body.style.overflow = originalOverflowRef.current;
       ctx.revert();
     };
-  }, [isActivated]);
+  }, [isActivated, hasCompletedRotation]);
 
   const activeStage = PIPELINE_STAGES[activeIndex];
   const ActiveIcon = STAGE_ICONS[activeIndex] || ClipboardList;
@@ -313,7 +318,7 @@ export function InteractivePipeline() {
         {/* ═══ TELEMETRY BAR (VISIBLE DURING ROTATION) ═══ */}
         <div
           ref={telemetryBarRef}
-          className="absolute top-20 left-6 right-6 z-30 flex justify-between items-center pointer-events-none"
+          className="absolute top-16 left-6 right-6 z-30 flex justify-between items-center pointer-events-none"
         >
           <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0f172a]/80 border border-[rgba(255,255,255,0.1)] backdrop-blur-md">
             <StatusDot status="healthy" pulse size="md" />
@@ -329,56 +334,56 @@ export function InteractivePipeline() {
         {/* ═══ LASER POINTER (VISIBLE DURING ROTATION) ═══ */}
         <div
           ref={laserRef}
-          className="absolute top-28 z-30 pointer-events-none flex flex-col items-center"
+          className="absolute top-24 z-30 pointer-events-none flex flex-col items-center"
         >
           <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[16px] border-t-[#38bdf8] drop-shadow-[0_0_20px_rgba(56,189,248,0.95)]" />
           <div className="w-px h-6 bg-gradient-to-b from-[#38bdf8] to-transparent animate-pulse" />
         </div>
 
-        {/* ═══ FIXED CENTER INFORMATION (DOES NOT ROTATE) ═══ */}
+        {/* ═══ FIXED CENTER INFORMATION (POSITIONED LOWER IN HOLLOW DIAL CORE) ═══ */}
         <div
           ref={centerTextRef}
-          className="absolute z-30 text-center flex flex-col items-center max-w-2xl pointer-events-none px-6"
+          className="absolute top-[48%] md:top-[50%] z-30 text-center flex flex-col items-center max-w-xl pointer-events-none px-6 -translate-y-1/2"
         >
           <div ref={textInnerRef} className="flex flex-col items-center">
             {/* Dynamic Stage Icon */}
             <div
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-[#0f172a]/90 border flex items-center justify-center mb-4 backdrop-blur-xl transition-all duration-300"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#0f172a]/90 border flex items-center justify-center mb-3 backdrop-blur-xl transition-all duration-300"
               style={{
-                boxShadow: `0 0 40px ${activeColor.glow}, inset 0 0 20px ${activeColor.glow}`,
+                boxShadow: `0 0 30px ${activeColor.glow}, inset 0 0 15px ${activeColor.glow}`,
                 borderColor: activeColor.main,
               }}
             >
               <ActiveIcon
-                className="w-8 h-8 sm:w-10 sm:h-10 transition-colors"
+                className="w-7 h-7 sm:w-8 sm:h-8 transition-colors"
                 style={{ color: activeColor.text }}
               />
             </div>
 
             <MonoLabel
-              className="mb-2 tracking-widest text-xs font-bold"
+              className="mb-1.5 tracking-widest text-[11px] font-bold"
               style={{ color: activeColor.text }}
             >
               {activeStage.badge}
             </MonoLabel>
 
-            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight mb-3 drop-shadow-[0_0_35px_rgba(255,255,255,0.3)]">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight mb-2 drop-shadow-[0_0_35px_rgba(255,255,255,0.3)]">
               {activeStage.title}
             </h2>
 
-            <p className="text-sm sm:text-base text-[#94a3b8] leading-relaxed mb-6 max-w-xl">
+            <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed mb-4 max-w-md">
               {activeStage.description}
             </p>
 
             {/* Telemetry Metrics */}
-            <div className="flex items-center justify-center gap-6 sm:gap-10 border-t border-[rgba(255,255,255,0.12)] pt-4 w-full max-w-md">
+            <div className="flex items-center justify-center gap-6 sm:gap-10 border-t border-[rgba(255,255,255,0.12)] pt-3 w-full max-w-sm">
               {activeStage.metrics.map((m, i) => (
                 <div key={i} className="flex flex-col items-center">
-                  <span className="text-[10px] font-mono text-[#64748b] uppercase tracking-wider mb-1">
+                  <span className="text-[9px] font-mono text-[#64748b] uppercase tracking-wider mb-0.5">
                     {m.label}
                   </span>
                   <span
-                    className="text-sm sm:text-base font-mono font-extrabold"
+                    className="text-xs sm:text-sm font-mono font-extrabold"
                     style={{ color: activeColor.text }}
                   >
                     {m.value}
@@ -388,7 +393,7 @@ export function InteractivePipeline() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mt-6 text-[11px] font-mono text-[#64748b] animate-bounce">
+          <div className="flex items-center gap-2 mt-4 text-[10px] font-mono text-[#64748b] animate-bounce">
             <span>SCROLL DOWN TO ROTATE MECHANICAL DIAL</span>
             <ChevronDown className="w-3.5 h-3.5 text-[#38bdf8]" />
           </div>
