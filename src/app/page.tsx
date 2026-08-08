@@ -1,3 +1,4 @@
+import { Header } from "@/components/Header";
 import { InteractivePipeline } from "@/components/InteractivePipeline";
 import { EngineeringDashboard } from "@/components/EngineeringDashboard";
 import { TechEcosystem } from "@/components/TechEcosystem";
@@ -9,8 +10,11 @@ import { SITE_CONTENT } from "@/data/siteContent";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#030308] text-white">
-      {/* 5-Phase Scrollytelling DevOps Experience (Hero -> Zoom -> Arc Scrub -> Move Out) */}
+    <main className="min-h-screen bg-[#030712] text-white">
+      {/* Sticky Header Navbar */}
+      <Header />
+
+      {/* 5-Phase Scrollytelling DevOps Experience */}
       <InteractivePipeline />
 
       {/* Services Console — Trust */}
@@ -19,22 +23,30 @@ export default function Home() {
       </div>
 
       {/* Technology Matrix — Confidence */}
-      <TechEcosystem />
+      <div id="matrix">
+        <TechEcosystem />
+      </div>
 
       {/* Case Studies — Proof */}
-      <DeploymentStories />
+      <div id="stories">
+        <DeploymentStories />
+      </div>
 
       {/* Process — Clarity */}
       <ProcessTimeline />
 
       {/* Control Room — Telemetry Dashboard */}
-      <ControlRoom />
+      <div id="telemetry">
+        <ControlRoom />
+      </div>
 
       {/* Contact Terminal */}
-      <ContactNode />
+      <div id="contact">
+        <ContactNode />
+      </div>
 
       {/* Footer */}
-      <footer className="py-8 text-center border-t border-[rgba(255,255,255,0.08)] bg-[#030308]">
+      <footer className="py-8 text-center border-t border-[rgba(255,255,255,0.08)] bg-[#030712]">
         <p className="text-xs font-mono text-[#475569] tracking-wider">
           © {new Date().getFullYear()} {SITE_CONTENT.footer.copyright}
         </p>

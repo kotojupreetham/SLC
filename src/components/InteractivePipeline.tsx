@@ -55,15 +55,15 @@ export function InteractivePipeline() {
 
       const isMobile = window.innerWidth < 768;
 
-      // 1. Initial positions
+      // 1. Initial setup
       gsap.set(heroContentRef.current, { x: 0, opacity: 1 });
       gsap.set(wheelBoxRef.current, {
         scale: isMobile ? 0.6 : 0.65,
-        x: isMobile ? 0 : "20vw",
-        y: isMobile ? "18vh" : "0vh",
+        x: isMobile ? 0 : "22vw",
+        y: isMobile ? "16vh" : "0vh",
         opacity: 1,
       });
-      gsap.set(centerCardRef.current, { opacity: 0, y: 30, scale: 0.9 });
+      gsap.set(centerCardRef.current, { opacity: 0, y: 40, scale: 0.9 });
 
       // 2. Master Scrollytelling Timeline
       const tl = gsap.timeline({
@@ -82,7 +82,7 @@ export function InteractivePipeline() {
       tl.to(
         heroContentRef.current,
         {
-          x: -120,
+          x: -140,
           opacity: 0,
           duration: 1,
           ease: "power2.inOut",
@@ -139,7 +139,7 @@ export function InteractivePipeline() {
                 if (cardInnerRef.current) {
                   gsap.fromTo(
                     cardInnerRef.current,
-                    { opacity: 0.3, y: -4 },
+                    { opacity: 0.25, y: -5 },
                     { opacity: 1, y: 0, duration: 0.2, ease: "power1.out" }
                   );
                 }
@@ -156,7 +156,7 @@ export function InteractivePipeline() {
       tl.to(
         wheelBoxRef.current,
         {
-          x: "80vw",
+          x: "85vw",
           opacity: 0,
           scale: 1.2,
           duration: 1,
@@ -169,7 +169,7 @@ export function InteractivePipeline() {
         centerCardRef.current,
         {
           opacity: 0,
-          y: -30,
+          y: -40,
           duration: 0.6,
           ease: "power2.in",
         },
@@ -183,12 +183,13 @@ export function InteractivePipeline() {
   const ActiveIcon = STAGE_ICONS[activeIndex] || ClipboardList;
 
   return (
-    <div ref={wrapperRef} className="relative w-full bg-[#030308] text-white">
-      {/* Ambient background glowing orbs */}
+    <section id="pipeline" ref={wrapperRef} className="relative w-full bg-[#030712] text-white">
+      {/* Ambient Background Glowing Orbs */}
       <div className="ambient-orb orb-1" />
       <div className="ambient-orb orb-2" />
+      <div className="ambient-orb orb-3" />
 
-      {/* Background Subtle Grid */}
+      {/* Background Grid Lines */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
 
       {/* Sticky Viewport Container */}
@@ -199,52 +200,52 @@ export function InteractivePipeline() {
         {/* HERO CONTENT (PHASE 1: START SMALL) */}
         <div
           ref={heroContentRef}
-          className="absolute left-6 md:left-16 lg:left-24 max-w-xl z-20 pointer-events-auto"
+          className="absolute left-6 md:left-16 lg:left-24 max-w-xl z-20 pointer-events-auto pt-16 md:pt-0"
         >
           <GlowBadge className="mb-6">{SITE_CONTENT.hero.badge}</GlowBadge>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-[1.02]">
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.02] text-white">
             {SITE_CONTENT.hero.headline}{" "}
-            <span className="bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] bg-clip-text text-transparent">
+            <span className="gradient-accent block">
               {SITE_CONTENT.hero.headlineAccent}
             </span>
           </h1>
 
-          <p className="text-[#94a3b8] text-sm sm:text-base leading-relaxed mb-8">
+          <p className="text-[#94a3b8] text-sm sm:text-base leading-relaxed mb-8 max-w-lg">
             {SITE_CONTENT.hero.description}
           </p>
 
           <div className="flex items-center gap-4">
             <a
               href="#services"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#38bdf8] text-[#030308] font-mono font-bold text-xs tracking-wider uppercase hover:bg-[#38bdf8]/90 transition-colors shadow-[0_0_20px_rgba(56,189,248,0.3)]"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#38bdf8] to-[#60a5fa] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase hover:opacity-90 transition-opacity shadow-[0_0_25px_rgba(56,189,248,0.4)]"
             >
               {SITE_CONTENT.hero.cta}
               <span className="text-base">↓</span>
             </a>
             <span className="text-xs font-mono text-[#64748b]">
-              SCROLL TO START
+              SCROLL TO INITIATE
             </span>
           </div>
         </div>
 
-        {/* TOP TELEMETRY BAR & POINTER (PHASE 3 & 4) */}
-        <div className="absolute top-6 left-6 right-6 z-30 flex justify-between items-center pointer-events-none">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0f172a]/60 border border-[rgba(255,255,255,0.08)] backdrop-blur-md">
+        {/* TOP TELEMETRY BAR (PHASE 3 & 4) */}
+        <div className="absolute top-20 left-6 right-6 z-30 flex justify-between items-center pointer-events-none">
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0f172a]/70 border border-[rgba(255,255,255,0.1)] backdrop-blur-md">
             <StatusDot status="healthy" pulse size="md" />
             <MonoLabel className="text-[#38bdf8]">
-              DEV OPS LIFECYCLE SCRUB
+              DEVOPS LIFECYCLE SCRUB
             </MonoLabel>
           </div>
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0f172a]/60 border border-[rgba(255,255,255,0.08)] backdrop-blur-md">
+          <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0f172a]/70 border border-[rgba(255,255,255,0.1)] backdrop-blur-md">
             <MonoLabel className="text-[#94a3b8]">STAGE 0{activeIndex + 1} / 08</MonoLabel>
           </div>
         </div>
 
-        {/* TOP CENTER ALIGNMENT POINTER */}
-        <div className="absolute top-14 z-30 pointer-events-none flex flex-col items-center">
-          <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-[#38bdf8] drop-shadow-[0_0_12px_rgba(56,189,248,0.8)]" />
-          <div className="w-px h-6 bg-gradient-to-b from-[#38bdf8] to-transparent animate-pulse" />
+        {/* TOP CENTER ALIGNMENT LASER POINTER */}
+        <div className="absolute top-24 z-30 pointer-events-none flex flex-col items-center">
+          <div className="w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-t-[14px] border-t-[#38bdf8] drop-shadow-[0_0_15px_rgba(56,189,248,0.9)]" />
+          <div className="w-px h-8 bg-gradient-to-b from-[#38bdf8] to-transparent animate-pulse" />
         </div>
 
         {/* NEON WHEEL BOX (PROPORTIONAL SIZING & CRISP VECTOR RENDERING) */}
@@ -253,7 +254,7 @@ export function InteractivePipeline() {
           className="relative w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] md:w-[580px] md:h-[580px] rounded-full flex items-center justify-center transform-gpu will-change-transform z-10"
         >
           {/* Outer Ring Glow Effect */}
-          <div className="absolute inset-0 rounded-full border border-[rgba(56,189,248,0.25)] shadow-[0_0_60px_rgba(56,189,248,0.12),inset_0_0_40px_rgba(56,189,248,0.06)]" />
+          <div className="absolute inset-0 rounded-full border border-[rgba(56,189,248,0.25)] shadow-[0_0_80px_rgba(56,189,248,0.15),inset_0_0_50px_rgba(56,189,248,0.08)]" />
 
           <svg
             ref={wheelSvgRef}
@@ -324,7 +325,7 @@ export function InteractivePipeline() {
                   <circle
                     cx="300"
                     cy="62"
-                    r={isActive ? 6 : 3.5}
+                    r={isActive ? 6.5 : 3.5}
                     fill={isActive ? "#38bdf8" : "#64748b"}
                     filter={isActive ? "url(#neonGlowFilter)" : undefined}
                     className="transition-all duration-300"
@@ -335,15 +336,15 @@ export function InteractivePipeline() {
           </svg>
         </div>
 
-        {/* CENTER FROSTED GLASS CARD (PLACED OUTSIDE WHEEL FOR PERFECT INDEPENDENT SCALING) */}
+        {/* CENTER FROSTED GLASS CARD (CINEMATIC) */}
         <div
           ref={centerCardRef}
           aria-live="polite"
-          className="glass-card-cinematic absolute w-[290px] h-[290px] sm:w-[320px] sm:h-[320px] md:w-[350px] md:h-[350px] rounded-3xl flex flex-col justify-between items-center text-center p-5 sm:p-6 md:p-7 z-20 pointer-events-auto"
+          className="glass-panel absolute w-[290px] h-[290px] sm:w-[320px] sm:h-[320px] md:w-[350px] md:h-[350px] rounded-3xl flex flex-col justify-between items-center text-center p-5 sm:p-6 md:p-7 z-20 pointer-events-auto"
         >
           <div ref={cardInnerRef} className="w-full flex flex-col items-center">
             {/* Dynamic Icon */}
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[rgba(56,189,248,0.12)] border border-[rgba(56,189,248,0.3)] flex items-center justify-center mb-2.5 shadow-[0_0_20px_rgba(56,189,248,0.2)]">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[rgba(56,189,248,0.12)] border border-[rgba(56,189,248,0.35)] flex items-center justify-center mb-2.5 shadow-[0_0_25px_rgba(56,189,248,0.25)]">
               <ActiveIcon className="w-6 h-6 sm:w-7 sm:h-7 text-[#38bdf8]" />
             </div>
 
@@ -366,7 +367,7 @@ export function InteractivePipeline() {
               {activeStage.metrics.map((m, i) => (
                 <div
                   key={i}
-                  className="flex flex-col text-left px-2 py-1 rounded-lg bg-[#030308]/60 border border-[rgba(255,255,255,0.05)]"
+                  className="flex flex-col text-left px-2.5 py-1.5 rounded-xl bg-[#030712]/60 border border-[rgba(255,255,255,0.06)]"
                 >
                   <span className="text-[9px] font-mono text-[#64748b] uppercase truncate">
                     {m.label}
@@ -386,7 +387,7 @@ export function InteractivePipeline() {
                 key={i}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
                   i === activeIndex
-                    ? "w-6 bg-[#38bdf8] shadow-[0_0_10px_rgba(56,189,248,0.8)]"
+                    ? "w-6 bg-[#38bdf8] shadow-[0_0_12px_rgba(56,189,248,0.9)]"
                     : "w-1.5 bg-[#334155]"
                 }`}
               />
@@ -394,6 +395,6 @@ export function InteractivePipeline() {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
