@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { HeroSection } from "@/components/HeroSection";
 import { InteractivePipeline } from "@/components/InteractivePipeline";
 import { EngineeringDashboard } from "@/components/EngineeringDashboard";
 import { TechEcosystem } from "@/components/TechEcosystem";
@@ -14,7 +15,10 @@ export default function Home() {
       {/* Sticky Header Navbar */}
       <Header />
 
-      {/* 5-Phase Scrollytelling DevOps Experience */}
+      {/* Hero Section */}
+      <HeroSection />
+
+      {/* Giant Mechanical Bezel DevOps Lifecycle Arc */}
       <InteractivePipeline />
 
       {/* Services Console — Trust */}

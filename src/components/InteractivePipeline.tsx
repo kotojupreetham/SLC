@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useRef, useState } from "react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
 import { PIPELINE_STAGES } from "@/data/pipelineStages";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { MonoLabel } from "./atoms/MonoLabel";
 import { StatusDot } from "./atoms/StatusDot";
-import { GlowBadge } from "./atoms/GlowBadge";
-import { SITE_CONTENT } from "@/data/siteContent";
 import {
   ClipboardList,
   Code2,
@@ -20,12 +20,12 @@ import {
   GitBranch,
   Cloud,
   Lock,
-  MousePointerClick,
-  RotateCw,
-  X,
-  ChevronLeft,
-  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 const STAGE_ICONS = [
   ClipboardList, // 01: Plan
@@ -38,79 +38,101 @@ const STAGE_ICONS = [
   BarChart3,     // 08: Monitor
 ];
 
+// Vibrant wedge colors matching DevOps reference diagram
+const WEDGE_COLORS = [
+  { main: "#0284c7", glow: "rgba(2, 132, 199, 0.4)", text: "#7dd3fc" }, // Plan: Sky Blue
+  { main: "#2563eb", glow: "rgba(37, 99, 235, 0.4)", text: "#93c5fd" }, // Code: Royal Blue
+  { main: "#4f46e5", glow: "rgba(79, 70, 229, 0.4)", text: "#a5b4fc" }, // Build: Indigo
+  { main: "#7c3aed", glow: "rgba(124, 58, 237, 0.4)", text: "#c4b5fd" }, // Test: Purple
+  { main: "#db2777", glow: "rgba(219, 39, 119, 0.4)", text: "#fbcfe8" }, // Release: Pink
+  { main: "#059669", glow: "rgba(5, 150, 105, 0.4)", text: "#6ee7b7" }, // Deploy: Emerald
+  { main: "#d97706", glow: "rgba(217, 119, 6, 0.4)", text: "#fde68a" }, // Operate: Amber
+  { main: "#0891b2", glow: "rgba(8, 145, 178, 0.4)", text: "#67e8f9" }, // Monitor: Cyan
+];
+
+// Pre-calculated 45-degree wedge sector path (Center: 700, 700)
+// Outer radius R = 560, Inner radius r = 400
+// Angle range: -112.5° to -67.5° (Top centered wedge)
+const WEDGE_PATH = "M 485.7 182.6 A 560 560 0 0 1 914.3 182.6 L 853.1 330.5 A 400 400 0 0 0 546.9 330.5 Z";
+
 export function InteractivePipeline() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const stickyRef = useRef<HTMLDivElement>(null);
   const wheelSvgRef = useRef<SVGSVGElement>(null);
   const textInnerRef = useRef<HTMLDivElement>(null);
+
+  const [activeIndex, setActiveIndex] = useState(0);
   const prefersReducedMotion = useReducedMotion();
 
-  // Open modal
-  const handleOpen = useCallback(() => {
-    setIsOpen(true);
-    setActiveIndex(0);
-  }, []);
+  useGSAP(
+    () => {
+      if (prefersReducedMotion) return;
+      if (typeof window === "undefined") return;
 
-  // Close modal
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-  }, []);
+      const totalStages = PIPELINE_STAGES.length;
+      const totalRotation = -(totalStages - 1) * 45; // -315 degrees sweep
 
-  // Keyboard navigation & Escape key listener
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return;
-      if (e.key === "Escape") {
-        handleClose();
-      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-        setActiveIndex((prev) => (prev + 1) % PIPELINE_STAGES.length);
-      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-        setActiveIndex((prev) => (prev - 1 + PIPELINE_STAGES.length) % PIPELINE_STAGES.length);
-      }
-    };
+      // GSAP ScrollTrigger timeline pinned section with mechanical snap
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: wrapperRef.current,
+          start: "top top",
+          end: "+=4200",
+          pin: stickyRef.current,
+          scrub: 0.8,
+          snap: {
+            snapTo: 1 / (totalStages - 1),
+            duration: { min: 0.25, max: 0.5 },
+            delay: 0.1,
+            ease: "power2.inOut",
+          },
+        },
+      });
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, handleClose]);
+      tl.to(wheelSvgRef.current, {
+        rotate: totalRotation,
+        ease: "none",
+        duration: 4,
+        onUpdate: function () {
+          const progress = this.progress();
+          const rawIndex = Math.round(progress * (totalStages - 1));
+          const newIndex = Math.min(Math.max(rawIndex, 0), totalStages - 1);
 
-  // Handle scroll wheel events inside modal to rotate lifecycle
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    if (!isOpen) return;
-    if (e.deltaY > 20) {
-      setActiveIndex((prev) => (prev + 1) % PIPELINE_STAGES.length);
-    } else if (e.deltaY < -20) {
-      setActiveIndex((prev) => (prev - 1 + PIPELINE_STAGES.length) % PIPELINE_STAGES.length);
-    }
-  }, [isOpen]);
-
-  // Rotate SVG wheel when activeIndex changes
-  useEffect(() => {
-    if (!wheelSvgRef.current) return;
-    const targetRotation = -activeIndex * (360 / PIPELINE_STAGES.length);
-
-    gsap.to(wheelSvgRef.current, {
-      rotate: targetRotation,
-      duration: prefersReducedMotion ? 0 : 0.6,
-      ease: "power2.out",
-    });
-
-    if (textInnerRef.current) {
-      gsap.fromTo(
-        textInnerRef.current,
-        { opacity: 0.2, y: -8 },
-        { opacity: 1, y: 0, duration: 0.25, ease: "power1.out" }
-      );
-    }
-  }, [activeIndex, prefersReducedMotion]);
+          setActiveIndex((prev) => {
+            if (prev !== newIndex) {
+              if (textInnerRef.current) {
+                gsap.fromTo(
+                  textInnerRef.current,
+                  { opacity: 0.15, y: -10, scale: 0.97 },
+                  { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "power2.out" }
+                );
+              }
+              return newIndex;
+            }
+            return prev;
+          });
+        },
+      });
+    },
+    { scope: wrapperRef, dependencies: [prefersReducedMotion] }
+  );
 
   const activeStage = PIPELINE_STAGES[activeIndex];
   const ActiveIcon = STAGE_ICONS[activeIndex] || ClipboardList;
+  const activeColor = WEDGE_COLORS[activeIndex] || WEDGE_COLORS[0];
 
   return (
-    <>
-      {/* --- HERO SECTION (NORMAL PAGE SCROLL - DOES NOT OPEN AUTOMATICALLY) --- */}
-      <section id="pipeline" className="relative min-h-screen w-full bg-[#030712] text-white flex items-center justify-center px-6 py-20 overflow-hidden">
-        {/* Ambient Orbs */}
+    <section
+      id="pipeline"
+      ref={wrapperRef}
+      className="relative w-full bg-[#030712] text-white"
+    >
+      {/* Sticky Viewport Window Container (Acts as a Mask) */}
+      <div
+        ref={stickyRef}
+        className="relative h-screen w-full flex flex-col justify-between items-center overflow-hidden px-6 py-8"
+      >
+        {/* Ambient Glow Orbs */}
         <div className="ambient-orb orb-1" />
         <div className="ambient-orb orb-2" />
         <div className="ambient-orb orb-3" />
@@ -118,343 +140,228 @@ export function InteractivePipeline() {
         {/* Background Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
 
-        <div className="relative z-10 max-w-7xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left Column: Hero Text */}
-          <div className="flex flex-col items-start">
-            <GlowBadge className="mb-6">{SITE_CONTENT.hero.badge}</GlowBadge>
+        {/* --- TOP HEADER & TELEMETRY BAR --- */}
+        <div className="w-full max-w-7xl flex items-center justify-between z-30 pt-4">
+          <div className="flex items-center gap-3">
+            <StatusDot status="healthy" pulse size="md" />
+            <MonoLabel className="text-[#38bdf8] text-xs tracking-widest uppercase">
+              ENGINEERING CONTROL CONSOLE // LIFECYCLE DIAL
+            </MonoLabel>
+          </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.02] text-white">
-              {SITE_CONTENT.hero.headline}{" "}
-              <span className="gradient-accent block">
-                {SITE_CONTENT.hero.headlineAccent}
-              </span>
-            </h1>
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-mono font-bold text-[#38bdf8] bg-[#0f172a]/90 px-4 py-2 rounded-full border border-[rgba(56,189,248,0.3)] shadow-[0_0_15px_rgba(56,189,248,0.2)]">
+              STAGE 0{activeIndex + 1} / 08
+            </span>
+          </div>
+        </div>
 
-            <p className="text-[#94a3b8] text-base sm:text-lg leading-relaxed mb-8 max-w-lg">
-              {SITE_CONTENT.hero.description}
+        {/* --- FIXED CENTER INFORMATION (DOES NOT ROTATE) --- */}
+        <div className="relative z-30 max-w-2xl text-center flex flex-col items-center my-auto">
+          {/* Laser Pointer Dial Marker */}
+          <div className="flex flex-col items-center mb-4">
+            <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[16px] border-t-[#38bdf8] drop-shadow-[0_0_20px_rgba(56,189,248,0.95)]" />
+            <div className="w-px h-6 bg-gradient-to-b from-[#38bdf8] to-transparent animate-pulse" />
+          </div>
+
+          <div ref={textInnerRef} className="flex flex-col items-center">
+            {/* Dynamic Stage Icon in Glowing Glass Badge */}
+            <div
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-[#0f172a]/90 border border-[rgba(255,255,255,0.15)] flex items-center justify-center mb-4 backdrop-blur-xl transition-all duration-300"
+              style={{
+                boxShadow: `0 0 40px ${activeColor.glow}, inset 0 0 20px ${activeColor.glow}`,
+                borderColor: activeColor.main,
+              }}
+            >
+              <ActiveIcon className="w-8 h-8 sm:w-10 sm:h-10 transition-colors" style={{ color: activeColor.text }} />
+            </div>
+
+            {/* Badge & Subtitle */}
+            <MonoLabel className="mb-2 tracking-widest text-xs font-bold" style={{ color: activeColor.text }}>
+              {activeStage.badge}
+            </MonoLabel>
+
+            {/* Stage Title */}
+            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight mb-3 drop-shadow-[0_0_35px_rgba(255,255,255,0.3)]">
+              {activeStage.title}
+            </h2>
+
+            {/* Stage Description */}
+            <p className="text-sm sm:text-base text-[#94a3b8] leading-relaxed mb-6 max-w-xl">
+              {activeStage.description}
             </p>
 
-            <div className="flex flex-wrap items-center gap-4">
-              <button
-                onClick={handleOpen}
-                className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#030712] font-mono font-bold text-xs sm:text-sm tracking-wider uppercase hover:scale-105 transition-all shadow-[0_0_30px_rgba(56,189,248,0.5)] cursor-pointer"
-              >
-                <MousePointerClick className="w-5 h-5 animate-bounce" />
-                INITIATE PIPELINE
-              </button>
-              <span className="text-xs font-mono text-[#64748b]">
-                CLICK BUTTON OR CIRCLE TO EXPLORE
-              </span>
-            </div>
-          </div>
-
-          {/* Right Column: Clickable DevOps Wheel Preview */}
-          <div className="flex justify-center items-center">
-            <div
-              onClick={handleOpen}
-              className="relative w-[320px] h-[320px] sm:w-[420px] sm:h-[420px] rounded-full flex items-center justify-center cursor-pointer group transition-transform duration-300 hover:scale-105"
-            >
-              {/* Outer Ring Glow */}
-              <div className="absolute inset-0 rounded-full border border-[rgba(56,189,248,0.35)] shadow-[0_0_60px_rgba(56,189,248,0.2),inset_0_0_40px_rgba(56,189,248,0.08)] group-hover:border-[#38bdf8] transition-colors" />
-
-              {/* Floating Relational DevOps Objects */}
-              <div className="floating-devops-obj obj-delay-1 -top-4 -left-4 px-3 py-1.5 rounded-2xl bg-[#0f172a]/90 border border-[rgba(56,189,248,0.4)] backdrop-blur-md flex items-center gap-2 text-[11px] font-mono text-[#38bdf8] shadow-[0_0_15px_rgba(56,189,248,0.3)]">
-                <GitBranch className="w-3.5 h-3.5 text-[#38bdf8]" />
-                <span>git-branch: main</span>
-              </div>
-
-              <div className="floating-devops-obj obj-delay-2 -top-4 -right-4 px-3 py-1.5 rounded-2xl bg-[#0f172a]/90 border border-[rgba(129,140,248,0.4)] backdrop-blur-md flex items-center gap-2 text-[11px] font-mono text-[#818cf8] shadow-[0_0_15px_rgba(129,140,248,0.3)]">
-                <Cloud className="w-3.5 h-3.5 text-[#818cf8]" />
-                <span>k8s-pod: active</span>
-              </div>
-
-              <div className="floating-devops-obj obj-delay-3 -bottom-4 -right-4 px-3 py-1.5 rounded-2xl bg-[#0f172a]/90 border border-[rgba(34,197,94,0.4)] backdrop-blur-md flex items-center gap-2 text-[11px] font-mono text-[#22c55e] shadow-[0_0_15px_rgba(34,197,94,0.3)]">
-                <Box className="w-3.5 h-3.5 text-[#22c55e]" />
-                <span>docker: build:ok</span>
-              </div>
-
-              <div className="floating-devops-obj obj-delay-1 -bottom-4 -left-4 px-3 py-1.5 rounded-2xl bg-[#0f172a]/90 border border-[rgba(245,158,11,0.4)] backdrop-blur-md flex items-center gap-2 text-[11px] font-mono text-[#f59e0b] shadow-[0_0_15px_rgba(245,158,11,0.3)]">
-                <Lock className="w-3.5 h-3.5 text-[#f59e0b]" />
-                <span>sec-gate: zero-vuln</span>
-              </div>
-
-              {/* Pulsing Badge */}
-              <div className="click-prompt-badge absolute top-1/2 left-1/2 z-30 px-5 py-3 rounded-full flex items-center gap-2.5 text-xs font-mono font-bold text-[#38bdf8] uppercase tracking-wider group-hover:scale-110 transition-transform">
-                <RotateCw className="w-4 h-4 animate-spin text-[#38bdf8]" />
-                <span>CLICK TO OPEN LIFECYCLE</span>
-              </div>
-
-              {/* SVG Wheel Graphics */}
-              <svg
-                viewBox="0 0 600 600"
-                className="w-full h-full"
-                textRendering="geometricPrecision"
-                shapeRendering="geometricPrecision"
-              >
-                <circle
-                  cx="300"
-                  cy="300"
-                  r="270"
-                  fill="none"
-                  stroke="rgba(56, 189, 248, 0.4)"
-                  strokeWidth="3"
-                />
-                <circle
-                  cx="300"
-                  cy="300"
-                  r="185"
-                  fill="none"
-                  stroke="rgba(255, 255, 255, 0.08)"
-                  strokeWidth="1.5"
-                  strokeDasharray="6 6"
-                />
-
-                {PIPELINE_STAGES.map((stage, idx) => {
-                  const angle = idx * (360 / PIPELINE_STAGES.length);
-                  return (
-                    <g key={stage.id} transform={`rotate(${angle}, 300, 300)`}>
-                      <text
-                        x="300"
-                        y="44"
-                        textAnchor="middle"
-                        className="stage-label-text"
-                      >
-                        {stage.id.toUpperCase()}
-                      </text>
-                      <circle cx="300" cy="62" r="3.5" fill="#64748b" />
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* --- EXPLICIT FULL-SCREEN INTERACTIVE OVERLAY (OPENED ONLY ON CLICK) --- */}
-      {isOpen && (
-        <div
-          onWheel={handleWheel}
-          className="fixed inset-0 z-50 bg-[#030712]/96 backdrop-blur-2xl text-white flex flex-col justify-between items-center px-6 py-6 overflow-hidden animate-fadeIn"
-        >
-          {/* Top Control Header */}
-          <div className="w-full max-w-7xl flex items-center justify-between z-30 pt-2">
-            <div className="flex items-center gap-3">
-              <StatusDot status="healthy" pulse size="md" />
-              <MonoLabel className="text-[#38bdf8] text-xs">
-                DEVOPS LIFECYCLE SCRUB
-              </MonoLabel>
-              <span className="text-xs font-mono text-[#64748b] hidden sm:inline">
-                (Use Mouse Scroll or Arrow Keys)
-              </span>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <span className="text-xs font-mono font-bold text-[#38bdf8] bg-[#0f172a] px-3.5 py-1.5 rounded-full border border-[rgba(56,189,248,0.3)]">
-                STAGE 0{activeIndex + 1} / 08
-              </span>
-              <button
-                onClick={handleClose}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1e293b] hover:bg-[#ef4444] text-white font-mono text-xs font-bold transition-colors border border-[rgba(255,255,255,0.1)] cursor-pointer"
-              >
-                <span>CLOSE PIPELINE</span>
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Center Wheel & Frameless Text Container */}
-          <div className="relative w-full max-w-5xl flex-1 flex items-center justify-center overflow-hidden">
-            {/* Top Alignment Pointer */}
-            <div className="absolute top-4 z-30 pointer-events-none flex flex-col items-center">
-              <div className="w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-t-[14px] border-t-[#38bdf8] drop-shadow-[0_0_15px_rgba(56,189,248,0.9)]" />
-              <div className="w-px h-8 bg-gradient-to-b from-[#38bdf8] to-transparent animate-pulse" />
-            </div>
-
-            {/* Interactive SVG Wheel */}
-            <div className="relative w-[340px] h-[340px] sm:w-[480px] sm:h-[480px] md:w-[580px] md:h-[580px] rounded-full flex items-center justify-center">
-              {/* Outer Ring Glow */}
-              <div className="absolute inset-0 rounded-full border border-[rgba(56,189,248,0.4)] shadow-[0_0_80px_rgba(56,189,248,0.25),inset_0_0_50px_rgba(56,189,248,0.1)]" />
-
-              {/* Floating Relational Objects */}
-              <div className="floating-devops-obj obj-delay-1 -top-6 -left-6 px-3 py-2 rounded-2xl bg-[#0f172a]/90 border border-[rgba(56,189,248,0.4)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#38bdf8] shadow-[0_0_20px_rgba(56,189,248,0.3)]">
-                <GitBranch className="w-4 h-4 text-[#38bdf8]" />
-                <span>git-branch: main</span>
-              </div>
-
-              <div className="floating-devops-obj obj-delay-2 -top-6 -right-6 px-3 py-2 rounded-2xl bg-[#0f172a]/90 border border-[rgba(129,140,248,0.4)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#818cf8] shadow-[0_0_20px_rgba(129,140,248,0.3)]">
-                <Cloud className="w-4 h-4 text-[#818cf8]" />
-                <span>k8s-pod: active</span>
-              </div>
-
-              <div className="floating-devops-obj obj-delay-3 -bottom-6 -right-6 px-3 py-2 rounded-2xl bg-[#0f172a]/90 border border-[rgba(34,197,94,0.4)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#22c55e] shadow-[0_0_20px_rgba(34,197,94,0.3)]">
-                <Box className="w-4 h-4 text-[#22c55e]" />
-                <span>docker: build:ok</span>
-              </div>
-
-              <div className="floating-devops-obj obj-delay-1 -bottom-6 -left-6 px-3 py-2 rounded-2xl bg-[#0f172a]/90 border border-[rgba(245,158,11,0.4)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#f59e0b] shadow-[0_0_20px_rgba(245,158,11,0.3)]">
-                <Lock className="w-4 h-4 text-[#f59e0b]" />
-                <span>sec-gate: zero-vuln</span>
-              </div>
-
-              <svg
-                ref={wheelSvgRef}
-                viewBox="0 0 600 600"
-                className="w-full h-full transform-gpu will-change-transform"
-                textRendering="geometricPrecision"
-                shapeRendering="geometricPrecision"
-              >
-                <defs>
-                  <linearGradient
-                    id="modalRingGlow"
-                    x1="0%"
-                    y1="0%"
-                    x2="100%"
-                    y2="100%"
+            {/* Telemetry Metrics */}
+            <div className="flex items-center justify-center gap-6 sm:gap-10 border-t border-[rgba(255,255,255,0.12)] pt-4 w-full max-w-md">
+              {activeStage.metrics.map((m, i) => (
+                <div key={i} className="flex flex-col items-center">
+                  <span className="text-[10px] font-mono text-[#64748b] uppercase tracking-wider mb-1">
+                    {m.label}
+                  </span>
+                  <span
+                    className="text-sm sm:text-base font-mono font-extrabold"
+                    style={{ color: activeColor.text }}
                   >
-                    <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.95" />
-                    <stop offset="50%" stopColor="#60a5fa" stopOpacity="0.45" />
-                    <stop offset="100%" stopColor="#818cf8" stopOpacity="0.85" />
-                  </linearGradient>
-
-                  <filter id="modalGlowFilter" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="3" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                  </filter>
-                </defs>
-
-                <circle
-                  cx="300"
-                  cy="300"
-                  r="270"
-                  fill="none"
-                  stroke="url(#modalRingGlow)"
-                  strokeWidth="3.5"
-                />
-                <circle
-                  cx="300"
-                  cy="300"
-                  r="185"
-                  fill="none"
-                  stroke="rgba(255, 255, 255, 0.08)"
-                  strokeWidth="1.5"
-                  strokeDasharray="6 6"
-                />
-
-                {PIPELINE_STAGES.map((stage, idx) => {
-                  const angle = idx * (360 / PIPELINE_STAGES.length);
-                  const isActive = idx === activeIndex;
-
-                  return (
-                    <g
-                      key={stage.id}
-                      transform={`rotate(${angle}, 300, 300)`}
-                      onClick={() => setActiveIndex(idx)}
-                      className="cursor-pointer"
-                    >
-                      <text
-                        x="300"
-                        y="44"
-                        textAnchor="middle"
-                        className={`stage-label-text ${isActive ? "active" : ""}`}
-                      >
-                        {stage.id.toUpperCase()}
-                      </text>
-                      <circle
-                        cx="300"
-                        cy="62"
-                        r={isActive ? 6.5 : 3.5}
-                        fill={isActive ? "#38bdf8" : "#64748b"}
-                        filter={isActive ? "url(#modalGlowFilter)" : undefined}
-                      />
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
-
-            {/* Pure Frameless Text Floating in Center of Ring */}
-            <div className="absolute z-20 pointer-events-none flex flex-col items-center justify-center text-center max-w-[280px] sm:max-w-[340px] px-4">
-              <div ref={textInnerRef} className="flex flex-col items-center">
-                {/* Dynamic Icon */}
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[rgba(56,189,248,0.12)] border border-[rgba(56,189,248,0.35)] flex items-center justify-center mb-3 shadow-[0_0_30px_rgba(56,189,248,0.3)]">
-                  <ActiveIcon className="w-6 h-6 sm:w-7 sm:h-7 text-[#38bdf8]" />
+                    {m.value}
+                  </span>
                 </div>
-
-                <MonoLabel className="text-[#38bdf8] mb-1 tracking-widest">
-                  {activeStage.badge}
-                </MonoLabel>
-
-                {/* Stage Heading */}
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight mb-2 drop-shadow-[0_0_25px_rgba(56,189,248,0.4)]">
-                  {activeStage.title}
-                </h2>
-
-                <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed mb-4 max-w-xs">
-                  {activeStage.description}
-                </p>
-
-                {/* Telemetry Metrics */}
-                <div className="flex items-center justify-center gap-4 text-left border-t border-[rgba(255,255,255,0.1)] pt-3 w-full">
-                  {activeStage.metrics.map((m, i) => (
-                    <div key={i} className="flex flex-col">
-                      <span className="text-[9px] font-mono text-[#64748b] uppercase tracking-wider">
-                        {m.label}
-                      </span>
-                      <span className="text-xs font-mono font-bold text-[#38bdf8]">
-                        {m.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Stage Controls & Navigation Bar */}
-          <div className="w-full max-w-4xl flex flex-col items-center gap-3 z-30 pb-2">
-            {/* Stage Quick Selection Pills */}
-            <div className="flex flex-wrap justify-center items-center gap-2">
-              {PIPELINE_STAGES.map((s, idx) => (
-                <button
-                  key={s.id}
-                  onClick={() => setActiveIndex(idx)}
-                  className={`px-3 py-1 rounded-full text-[10px] font-mono transition-all cursor-pointer ${
-                    idx === activeIndex
-                      ? "bg-[#38bdf8] text-[#030712] font-bold shadow-[0_0_15px_rgba(56,189,248,0.6)]"
-                      : "bg-[#0f172a] text-[#94a3b8] hover:text-white border border-[rgba(255,255,255,0.06)]"
-                  }`}
-                >
-                  0{idx + 1} {s.id.toUpperCase()}
-                </button>
               ))}
             </div>
+          </div>
 
-            {/* Prev / Next Arrow Controls */}
-            <div className="flex items-center gap-6">
+          {/* 8-Stage Progress Indicator */}
+          <div className="flex items-center justify-center gap-2 mt-6">
+            {PIPELINE_STAGES.map((s, idx) => (
               <button
-                onClick={() => setActiveIndex((prev) => (prev - 1 + PIPELINE_STAGES.length) % PIPELINE_STAGES.length)}
-                className="flex items-center gap-1 px-4 py-2 rounded-xl bg-[#0f172a] hover:bg-[#1e293b] border border-[rgba(255,255,255,0.1)] text-xs font-mono text-[#38bdf8] transition-colors cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                PREV STAGE
-              </button>
+                key={s.id}
+                onClick={() => {
+                  if (wrapperRef.current) {
+                    const progress = idx / (PIPELINE_STAGES.length - 1);
+                    const targetScroll = wrapperRef.current.offsetTop + progress * 4200;
+                    window.scrollTo({ top: targetScroll, behavior: "smooth" });
+                  }
+                }}
+                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                  idx === activeIndex
+                    ? "w-8 bg-[#38bdf8] shadow-[0_0_15px_rgba(56,189,248,0.9)]"
+                    : "w-2 bg-[#1e293b] hover:bg-[#334155]"
+                }`}
+                aria-label={`Jump to stage 0${idx + 1} ${s.id}`}
+              />
+            ))}
+          </div>
 
-              <span className="text-xs font-mono text-[#64748b]">
-                {activeIndex + 1} / {PIPELINE_STAGES.length}
-              </span>
-
-              <button
-                onClick={() => setActiveIndex((prev) => (prev + 1) % PIPELINE_STAGES.length)}
-                className="flex items-center gap-1 px-4 py-2 rounded-xl bg-[#0f172a] hover:bg-[#1e293b] border border-[rgba(255,255,255,0.1)] text-xs font-mono text-[#38bdf8] transition-colors cursor-pointer"
-              >
-                NEXT STAGE
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+          <div className="flex items-center gap-2 mt-4 text-[11px] font-mono text-[#64748b] animate-bounce">
+            <span>SCROLL DOWN TO ROTATE MECHANICAL DIAL</span>
+            <ChevronDown className="w-3.5 h-3.5 text-[#38bdf8]" />
           </div>
         </div>
-      )}
-    </>
+
+        {/* --- GIANT ROTATING MECHANICAL DIAL (CLIPPED AT BOTTOM VIEWPORT MASK) --- */}
+        <div className="absolute -bottom-[540px] sm:-bottom-[640px] md:-bottom-[720px] left-1/2 -translate-x-1/2 w-[1100px] h-[1100px] sm:w-[1300px] sm:h-[1300px] md:w-[1450px] md:h-[1450px] pointer-events-auto z-20">
+
+          {/* FLOATING RELATIONAL DEVOPS OBJECTS FLOATING AROUND THE ARC */}
+          <div className="floating-devops-obj obj-delay-1 top-[8%] left-[12%] px-3.5 py-2 rounded-2xl bg-[#0f172a]/90 border border-[rgba(56,189,248,0.4)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#38bdf8] shadow-[0_0_20px_rgba(56,189,248,0.3)]">
+            <GitBranch className="w-4 h-4 text-[#38bdf8]" />
+            <span>git-branch: main</span>
+          </div>
+
+          <div className="floating-devops-obj obj-delay-2 top-[8%] right-[12%] px-3.5 py-2 rounded-2xl bg-[#0f172a]/90 border border-[rgba(129,140,248,0.4)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#818cf8] shadow-[0_0_20px_rgba(129,140,248,0.3)]">
+            <Cloud className="w-4 h-4 text-[#818cf8]" />
+            <span>k8s-pod: active</span>
+          </div>
+
+          <div className="floating-devops-obj obj-delay-3 top-[28%] left-[2%] px-3.5 py-2 rounded-2xl bg-[#0f172a]/90 border border-[rgba(34,197,94,0.4)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#22c55e] shadow-[0_0_20px_rgba(34,197,94,0.3)]">
+            <Box className="w-4 h-4 text-[#22c55e]" />
+            <span>docker: build:ok</span>
+          </div>
+
+          <div className="floating-devops-obj obj-delay-1 top-[28%] right-[2%] px-3.5 py-2 rounded-2xl bg-[#0f172a]/90 border border-[rgba(245,158,11,0.4)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#f59e0b] shadow-[0_0_20px_rgba(245,158,11,0.3)]">
+            <Lock className="w-4 h-4 text-[#f59e0b]" />
+            <span>sec-gate: zero-vuln</span>
+          </div>
+
+          {/* Outer Glowing Ambient Ring Container */}
+          <div className="absolute inset-0 rounded-full border-2 border-[rgba(56,189,248,0.25)] shadow-[0_0_120px_rgba(56,189,248,0.15),inset_0_0_80px_rgba(56,189,248,0.08)] pointer-events-none" />
+
+          {/* ROTATING SVG LIFE-CYCLE WHEEL */}
+          <svg
+            ref={wheelSvgRef}
+            viewBox="0 0 1400 1400"
+            className="w-full h-full transform-gpu will-change-transform"
+            textRendering="geometricPrecision"
+            shapeRendering="geometricPrecision"
+            role="img"
+            aria-label="DevOps mechanical lifecycle rotary dial"
+          >
+            <defs>
+              <linearGradient id="dialOuterGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.9" />
+                <stop offset="50%" stopColor="#60a5fa" stopOpacity="0.5" />
+                <stop offset="100%" stopColor="#818cf8" stopOpacity="0.9" />
+              </linearGradient>
+
+              <filter id="dialDropShadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="6" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+
+            {/* Outer Structural Bezel Circles */}
+            <circle cx="700" cy="700" r="660" fill="none" stroke="url(#dialOuterGlow)" strokeWidth="3" />
+            <circle cx="700" cy="700" r="380" fill="none" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="2" strokeDasharray="8 8" />
+
+            {/* 8 SEGMENTED DEV-OPS CHEVRON WEDGES & STAGE TITLES */}
+            {PIPELINE_STAGES.map((stage, idx) => {
+              const angle = idx * 45;
+              const isActive = idx === activeIndex;
+              const colorConfig = WEDGE_COLORS[idx] || WEDGE_COLORS[0];
+              const IconComp = STAGE_ICONS[idx] || ClipboardList;
+
+              return (
+                <g
+                  key={stage.id}
+                  transform={`rotate(${angle}, 700, 700)`}
+                  onClick={() => {
+                    if (wrapperRef.current) {
+                      const progress = idx / (PIPELINE_STAGES.length - 1);
+                      const targetScroll = wrapperRef.current.offsetTop + progress * 4200;
+                      window.scrollTo({ top: targetScroll, behavior: "smooth" });
+                    }
+                  }}
+                  className="cursor-pointer group"
+                >
+                  {/* Segmented Chevron Wedge */}
+                  <path
+                    d={WEDGE_PATH}
+                    fill={isActive ? colorConfig.main : "rgba(15, 23, 42, 0.85)"}
+                    fillOpacity={isActive ? 0.95 : 0.65}
+                    stroke={isActive ? "#ffffff" : "rgba(255, 255, 255, 0.12)"}
+                    strokeWidth={isActive ? "3.5" : "1.5"}
+                    filter={isActive ? "url(#dialDropShadow)" : undefined}
+                    className="transition-all duration-300 group-hover:fill-opacity-90"
+                  />
+
+                  {/* BOLD LARGE STAGE TEXT ON THE WHEEL */}
+                  <text
+                    x="700"
+                    y="235"
+                    textAnchor="middle"
+                    fill={isActive ? "#ffffff" : colorConfig.text}
+                    fontFamily="var(--font-mono)"
+                    fontWeight="900"
+                    fontSize={isActive ? "28" : "24"}
+                    letterSpacing="4"
+                    className="transition-all duration-300 select-none uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]"
+                  >
+                    {stage.id}
+                  </text>
+
+                  {/* CIRCULAR ICON BADGE INSIDE WEDGE */}
+                  <g transform="translate(700, 310)">
+                    <circle
+                      cx="0"
+                      cy="0"
+                      r={isActive ? "36" : "28"}
+                      fill={isActive ? "#ffffff" : "#0f172a"}
+                      stroke={isActive ? colorConfig.main : "rgba(255, 255, 255, 0.25)"}
+                      strokeWidth="2.5"
+                      className="transition-all duration-300"
+                    />
+                    {/* SVG Icon inside badge */}
+                    <g transform={isActive ? "translate(-14, -14) scale(1.16)" : "translate(-12, -12) scale(1)"}>
+                      <IconComp
+                        className="w-6 h-6 transition-colors"
+                        style={{ color: isActive ? colorConfig.main : colorConfig.text }}
+                      />
+                    </g>
+                  </g>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+      </div>
+    </section>
   );
 }
