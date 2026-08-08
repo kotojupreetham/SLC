@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -19,6 +19,11 @@ import {
   CloudUpload,
   Settings,
   BarChart3,
+  GitBranch,
+  Cloud,
+  Lock,
+  MousePointerClick,
+  RotateCw,
 } from "lucide-react";
 
 if (typeof window !== "undefined") {
@@ -46,7 +51,40 @@ export function InteractivePipeline() {
   const textInnerRef = useRef<HTMLDivElement>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isInitiated, setIsInitiated] = useState(false);
   const prefersReducedMotion = useReducedMotion();
+
+  // Function to initiate wheel zoom & rotation
+  const handleInitiate = useCallback(() => {
+    setIsInitiated(true);
+
+    if (typeof window === "undefined") return;
+    const isMobile = window.innerWidth < 768;
+
+    // Smooth GSAP expansion transition upon click
+    gsap.to(heroContentRef.current, {
+      x: -140,
+      opacity: 0,
+      duration: 0.9,
+      ease: "power2.inOut",
+    });
+
+    gsap.to(wheelBoxRef.current, {
+      scale: isMobile ? 1.15 : 1.45,
+      x: 0,
+      y: isMobile ? "22%" : "28%",
+      duration: 1.1,
+      ease: "power2.inOut",
+    });
+
+    gsap.to(centerTextRef.current, {
+      opacity: 1,
+      y: isMobile ? "18%" : "22%",
+      duration: 0.8,
+      delay: 0.3,
+      ease: "power2.out",
+    });
+  }, []);
 
   useGSAP(
     () => {
@@ -74,48 +112,16 @@ export function InteractivePipeline() {
           pin: stickyRef.current,
           scrub: 1.2,
           anticipatePin: 1,
+          onUpdate: (self) => {
+            // If user scrolls past 5%, auto-initiate expansion if not already initiated
+            if (self.progress > 0.05 && !isInitiated) {
+              handleInitiate();
+            }
+          },
         },
       });
 
-      // --- PHASE 1 -> PHASE 2 & 3: ZOOM & MORPH INTO IMMERSIVE VIEW ---
-      // Fade out Hero Text
-      tl.to(
-        heroContentRef.current,
-        {
-          x: -140,
-          opacity: 0,
-          duration: 1,
-          ease: "power2.inOut",
-        },
-        0
-      );
-
-      // Scale & Move Wheel into Immersive Center View
-      tl.to(
-        wheelBoxRef.current,
-        {
-          scale: isMobile ? 1.15 : 1.45,
-          x: 0,
-          y: isMobile ? "22%" : "28%",
-          duration: 1.2,
-          ease: "power2.inOut",
-        },
-        0
-      );
-
-      // Fade in Floating Center Text (No Box Card)
-      tl.to(
-        centerTextRef.current,
-        {
-          opacity: 1,
-          y: isMobile ? "18%" : "22%",
-          duration: 0.8,
-          ease: "power2.out",
-        },
-        0.5
-      );
-
-      // --- PHASE 4: SCROLL THROUGH STAGES (SCRUB ROTATION ANTI-CLOCKWISE) ---
+      // Timeline stages matching rotation scrubbing
       const totalRotation = -315; // 8 stages * 45deg = 315deg sweep
 
       tl.to(
@@ -151,7 +157,7 @@ export function InteractivePipeline() {
         1.2
       );
 
-      // --- PHASE 5: FINISH & MOVE OUT ---
+      // --- FINISH & MOVE OUT ---
       tl.to(
         wheelBoxRef.current,
         {
@@ -175,7 +181,7 @@ export function InteractivePipeline() {
         5.4
       );
     },
-    { scope: wrapperRef, dependencies: [prefersReducedMotion] }
+    { scope: wrapperRef, dependencies: [prefersReducedMotion, isInitiated, handleInitiate] }
   );
 
   const activeStage = PIPELINE_STAGES[activeIndex];
@@ -196,7 +202,7 @@ export function InteractivePipeline() {
         ref={stickyRef}
         className="relative h-screen w-full flex items-center justify-center overflow-hidden"
       >
-        {/* HERO CONTENT (PHASE 1: START SMALL) */}
+        {/* HERO CONTENT (START SMALL STATE) */}
         <div
           ref={heroContentRef}
           className="absolute left-6 md:left-16 lg:left-24 max-w-xl z-20 pointer-events-auto pt-16 md:pt-0"
@@ -215,15 +221,15 @@ export function InteractivePipeline() {
           </p>
 
           <div className="flex items-center gap-4">
-            <a
-              href="#services"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#38bdf8] to-[#60a5fa] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase hover:opacity-90 transition-opacity shadow-[0_0_25px_rgba(56,189,248,0.4)]"
+            <button
+              onClick={handleInitiate}
+              className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase hover:scale-105 transition-all shadow-[0_0_30px_rgba(56,189,248,0.5)] cursor-pointer"
             >
-              {SITE_CONTENT.hero.cta}
-              <span className="text-base">↓</span>
-            </a>
-            <span className="text-xs font-mono text-[#64748b]">
-              SCROLL TO INITIATE
+              <MousePointerClick className="w-4 h-4 animate-bounce" />
+              INITIATE PIPELINE
+            </button>
+            <span className="text-xs font-mono text-[#64748b] hidden sm:inline">
+              CLICK CIRCLE TO ZOOM & ROTATE
             </span>
           </div>
         </div>
@@ -247,13 +253,43 @@ export function InteractivePipeline() {
           <div className="w-px h-8 bg-gradient-to-b from-[#38bdf8] to-transparent animate-pulse" />
         </div>
 
-        {/* NEON WHEEL BOX */}
+        {/* NEON WHEEL BOX & FLOATING DEVOPS OBJECTS */}
         <div
           ref={wheelBoxRef}
-          className="relative w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] md:w-[580px] md:h-[580px] rounded-full flex items-center justify-center transform-gpu will-change-transform z-10"
+          onClick={handleInitiate}
+          className="relative w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] md:w-[580px] md:h-[580px] rounded-full flex items-center justify-center transform-gpu will-change-transform z-10 cursor-pointer group"
         >
           {/* Outer Ring Glow Effect */}
-          <div className="absolute inset-0 rounded-full border border-[rgba(56,189,248,0.25)] shadow-[0_0_80px_rgba(56,189,248,0.15),inset_0_0_50px_rgba(56,189,248,0.08)]" />
+          <div className="absolute inset-0 rounded-full border border-[rgba(56,189,248,0.3)] shadow-[0_0_80px_rgba(56,189,248,0.15),inset_0_0_50px_rgba(56,189,248,0.08)] group-hover:border-[#38bdf8] transition-colors" />
+
+          {/* FLOATING RELATIONAL DEVOPS OBJECTS */}
+          <div className="floating-devops-obj obj-delay-1 -top-6 -left-6 px-3 py-2 rounded-2xl bg-[#0f172a]/80 border border-[rgba(56,189,248,0.3)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#38bdf8] shadow-[0_0_20px_rgba(56,189,248,0.2)]">
+            <GitBranch className="w-4 h-4 text-[#38bdf8]" />
+            <span>git-branch: main</span>
+          </div>
+
+          <div className="floating-devops-obj obj-delay-2 -top-6 -right-6 px-3 py-2 rounded-2xl bg-[#0f172a]/80 border border-[rgba(129,140,248,0.3)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#818cf8] shadow-[0_0_20px_rgba(129,140,248,0.2)]">
+            <Cloud className="w-4 h-4 text-[#818cf8]" />
+            <span>k8s-pod: active</span>
+          </div>
+
+          <div className="floating-devops-obj obj-delay-3 -bottom-6 -right-6 px-3 py-2 rounded-2xl bg-[#0f172a]/80 border border-[rgba(34,197,94,0.3)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#22c55e] shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+            <Box className="w-4 h-4 text-[#22c55e]" />
+            <span>docker: build:ok</span>
+          </div>
+
+          <div className="floating-devops-obj obj-delay-1 -bottom-6 -left-6 px-3 py-2 rounded-2xl bg-[#0f172a]/80 border border-[rgba(245,158,11,0.3)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#f59e0b] shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+            <Lock className="w-4 h-4 text-[#f59e0b]" />
+            <span>sec-gate: zero-vuln</span>
+          </div>
+
+          {/* CLICK TO INITIATE PROMPT BADGE (ACTIVE BEFORE ZOOM) */}
+          {!isInitiated && (
+            <div className="click-prompt-badge absolute top-1/2 left-1/2 z-30 px-5 py-3 rounded-full flex items-center gap-2.5 text-xs font-mono font-bold text-[#38bdf8] uppercase tracking-wider pointer-events-none">
+              <RotateCw className="w-4 h-4 animate-spin text-[#38bdf8]" />
+              <span>CLICK TO INITIATE ROTATION</span>
+            </div>
+          )}
 
           <svg
             ref={wheelSvgRef}
@@ -335,7 +371,7 @@ export function InteractivePipeline() {
           </svg>
         </div>
 
-        {/* PURE FLOATING TEXT INSIDE THE CIRCLE (NO CARD BOX / NO BORDER) */}
+        {/* PURE FLOATING TEXT INSIDE THE CIRCLE (NO CARD BOX) */}
         <div
           ref={centerTextRef}
           aria-live="polite"
@@ -343,7 +379,7 @@ export function InteractivePipeline() {
         >
           <div ref={textInnerRef} className="flex flex-col items-center">
             {/* Dynamic Stage Icon */}
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[rgba(56,189,248,0.12)] border border-[rgba(56,189,248,0.3)] flex items-center justify-center mb-3 shadow-[0_0_25px_rgba(56,189,248,0.3)]">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[rgba(56,189,248,0.12)] border border-[rgba(56,189,248,0.35)] flex items-center justify-center mb-3 shadow-[0_0_30px_rgba(56,189,248,0.3)]">
               <ActiveIcon className="w-6 h-6 sm:w-7 sm:h-7 text-[#38bdf8]" />
             </div>
 
@@ -353,7 +389,7 @@ export function InteractivePipeline() {
             </MonoLabel>
 
             {/* Dynamic Heading (Changes as user scrolls down) */}
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight mb-2 drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight mb-2 drop-shadow-[0_0_25px_rgba(56,189,248,0.4)]">
               {activeStage.title}
             </h2>
 
