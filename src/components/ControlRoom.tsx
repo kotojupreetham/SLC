@@ -33,12 +33,12 @@ export function ControlRoom() {
       <SectionHeader
         label="SYSTEM TELEMETRY // CONTROL ROOM"
         title="Engineering Control Room"
-        description="Real-time operational intelligence across the entire software delivery infrastructure."
+        description="Illustrative delivery telemetry demonstrating the real-time operational visibility SRE builds into client delivery pipelines."
       />
 
       <div className="bg-[#0f172a] border border-[rgba(56,189,248,0.3)] rounded-2xl overflow-hidden">
         {/* Header bar */}
-        <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex gap-1.5">
               <span className="w-3 h-3 rounded-full bg-[#ef4444]/80" />
@@ -47,9 +47,15 @@ export function ControlRoom() {
             </div>
             <MonoLabel className="text-[#64748b]">sre-control-room.sys</MonoLabel>
           </div>
-          <div className="flex items-center gap-2">
-            <StatusDot status="healthy" pulse size="md" />
-            <MonoLabel className="text-[#22c55e]">ALL SYSTEMS NOMINAL</MonoLabel>
+
+          <div className="flex items-center gap-3">
+            <span className="px-2.5 py-1 rounded bg-[#38bdf8]/10 border border-[#38bdf8]/30 text-[10px] font-mono text-[#7dd3fc]">
+              SAMPLE TELEMETRY PREVIEW
+            </span>
+            <div className="flex items-center gap-2">
+              <StatusDot status="healthy" pulse size="md" />
+              <MonoLabel className="text-[#22c55e]">ALL SYSTEMS NOMINAL</MonoLabel>
+            </div>
           </div>
         </div>
 

@@ -14,15 +14,50 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sre.engineering";
+
 export const metadata: Metadata = {
-  title: "Smarter Release Engineering (SRE) — Reliable Software Delivery",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Smarter Release Engineering (SRE) — Software Delivery Systems",
+    template: "%s | Smarter Release Engineering",
+  },
   description:
-    "Architecting, automating, and continuously improving enterprise software delivery systems. Step inside our live deployment pipeline.",
+    "We design, automate, and continuously improve software delivery systems. Reduce release risk, optimize CI/CD pipelines, and embed DevSecOps guardrails.",
+  keywords: [
+    "Release Engineering",
+    "SRE Consultancy",
+    "CI/CD Pipelines",
+    "Platform Engineering",
+    "DevSecOps",
+    "Software Delivery",
+    "Kubernetes Automation",
+    "GitOps",
+  ],
+  authors: [{ name: "Smarter Release Engineering Team" }],
+  creator: "Smarter Release Engineering",
+  publisher: "Smarter Release Engineering",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "Smarter Release Engineering",
+    title: "Smarter Release Engineering (SRE) — Software Delivery Systems",
     description:
-      "Interactive continuous integration & delivery pipeline experience.",
+      "Design, automate, and continuously improve software delivery systems with zero-downtime progressive delivery and observability.",
+    url: siteUrl,
+    siteName: "Smarter Release Engineering",
+    locale: "en_US",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Smarter Release Engineering (SRE)",
+    description:
+      "Architecting, automating, and continuously improving enterprise software delivery systems.",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

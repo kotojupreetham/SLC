@@ -43,11 +43,10 @@ Use this backlog as a planning aid. Create one small branch/PR per item where pr
 
 ## P1 - credibility and public launch
 
-### SRE-101: Label or connect control-room data
+### SRE-101: Label or connect control-room data [COMPLETED]
 
-- **Files:** `src/data/controlRoomMetrics.ts`, `src/components/ControlRoom.tsx`, copy
-- **Decision:** sample dashboard vs. live demo data
-- **Done when:** no visitor can reasonably mistake static sample values for an operational client dashboard
+- **Files:** `src/components/ControlRoom.tsx`
+- **Completed:** Clearly labeled telemetry panel with `SAMPLE TELEMETRY PREVIEW` badge and updated description stating it demonstrates illustrative telemetry built into client pipelines.
 
 ### SRE-102: Approve/rewrite case-study claims
 
@@ -61,16 +60,15 @@ Use this backlog as a planning aid. Create one small branch/PR per item where pr
 - **Deliverable:** outcome-led headline, commercial primary CTA, lifecycle secondary CTA
 - **Done when:** a new visitor understands offer and next step without entering dial
 
-### SRE-104: Add anchor offset and skip link
+### SRE-104: Add anchor offset and skip link [COMPLETED]
 
-- **Files:** `globals.css`, `page.tsx`, `Header.tsx`
-- **Done when:** anchor targets are not hidden behind header; keyboard user can skip repetitive navigation
+- **Files:** `src/app/globals.css`, `src/app/page.tsx`, `src/components/Header.tsx`
+- **Completed:** Added `scroll-margin-top: 6rem` to all anchor targets to prevent header overlap, and added accessible skip-to-content link for keyboard users (`#main-content`).
 
-### SRE-105: Complete metadata/social assets
+### SRE-105: Complete metadata/social assets [COMPLETED]
 
-- **Files:** `layout.tsx`, metadata route files, public/app assets
-- **Dependency:** final domain and approved brand image
-- **Done when:** canonical URL, sharing image, favicon, sitemap, robots, and manifest are correct
+- **Files:** `src/app/layout.tsx`, `src/app/robots.ts`, `src/app/sitemap.ts`, `src/app/manifest.ts`
+- **Completed:** Configured `metadataBase`, canonical URLs, OpenGraph, Twitter cards, indexable `sitemap.xml`, `robots.txt`, and `manifest.webmanifest`.
 
 ### SRE-106: Add legal/privacy routes and form disclosure
 
@@ -92,10 +90,10 @@ Use this backlog as a planning aid. Create one small branch/PR per item where pr
 - **Deliverable:** one or two effects (signal/glow/grid), paused offscreen and reduced-motion safe
 - **Done when:** visual improvement has no obvious mobile performance regression
 
-### SRE-203: Add icon map and service icons
+### SRE-203: Add icon map and service icons [COMPLETED]
 
-- **Files:** new `src/lib/icons.tsx`, services/dashboard components
-- **Done when:** one consistent simple icon supports each service category
+- **Files:** `src/lib/icons.tsx`, `src/components/EngineeringDashboard.tsx`
+- **Completed:** Created centralized icon map (`SERVICE_ICON_MAP`) mapping service modules to Lucide React icons (`Rocket`, `Workflow`, `Boxes`, `Layers`, `ShieldCheck`, `Activity`).
 
 ### SRE-204: Improve service/card transitions
 

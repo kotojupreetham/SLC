@@ -35,6 +35,11 @@ body {
   overflow-x: hidden;
 }
 
+/* Ensure anchor links are offset cleanly below the fixed header */
+[id] {
+  scroll-margin-top: 6rem;
+}
+
 ::selection {
   background-color: #38bdf8;
   color: #030712;
@@ -107,76 +112,6 @@ body {
   100% {
     transform: translate(-40px, 50px) scale(0.92);
   }
-}
-
-/* --- FLOATING DEVOPS OBJECT ANIMATIONS --- */
-
-.floating-devops-obj {
-  position: absolute;
-  pointer-events: none;
-  z-index: 15;
-  animation: floatDevopsObj 8s infinite alternate ease-in-out;
-}
-
-.obj-delay-1 {
-  animation-delay: -2.5s;
-}
-.obj-delay-2 {
-  animation-delay: -5s;
-}
-.obj-delay-3 {
-  animation-delay: -7.5s;
-}
-
-@keyframes floatDevopsObj {
-  0% {
-    transform: translateY(0px) rotate(0deg) scale(1);
-  }
-  50% {
-    transform: translateY(-16px) rotate(6deg) scale(1.06);
-  }
-  100% {
-    transform: translateY(12px) rotate(-6deg) scale(0.94);
-  }
-}
-
-/* --- CLICKABLE PULSING PROMPT BADGE --- */
-
-.click-prompt-badge {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.7) 100%);
-  border: 1px solid rgba(56, 189, 248, 0.5);
-  box-shadow: 0 0 25px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(56, 189, 248, 0.2);
-  animation: pulsePrompt 2s infinite ease-in-out;
-}
-
-@keyframes pulsePrompt {
-  0%, 100% {
-    transform: translate(-50%, -50%) scale(1);
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(1.06);
-    box-shadow: 0 0 35px rgba(56, 189, 248, 0.75), 0 0 60px rgba(129, 140, 248, 0.4);
-  }
-}
-
-/* --- NEON WHEEL LABELS --- */
-
-.stage-label-text {
-  fill: rgba(248, 250, 252, 0.35);
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 3px;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  user-select: none;
-}
-
-.stage-label-text.active {
-  fill: #ffffff;
-  font-size: 13px;
-  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.95))
-    drop-shadow(0 0 25px rgba(129, 140, 248, 0.7));
 }
 
 /* --- ULTRA GLASSMORPHISM --- */
