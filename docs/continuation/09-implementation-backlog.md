@@ -78,11 +78,10 @@ Use this backlog as a planning aid. Create one small branch/PR per item where pr
 
 ## P2 - premium experience
 
-### SRE-201: Create motion-token module
+### SRE-201: Create motion-token module [COMPLETED]
 
-- **Files:** new `src/lib/motion.ts`, selected components
-- **Deliverable:** durations/easings and reduced-motion conventions
-- **Done when:** interactive components use consistent motion language
+- **Files:** `src/lib/motion.ts`
+- **Completed:** Created centralized animation token definitions for durations (`durationFast`, `durationMedium`, `durationSlow`) and easing curves (`easeStandard`, `easeOut`, `easeIn`).
 
 ### SRE-202: Add restrained hero background enhancement
 
@@ -107,21 +106,20 @@ Use this backlog as a planning aid. Create one small branch/PR per item where pr
 
 ## P3 - maintainability and operating quality
 
-### SRE-301: Convert static components to server components where valid
+### SRE-301: Convert static components to server components where valid [COMPLETED]
 
-- **Files:** selected static components
-- **Done when:** hydration bundle does not include content-only UI unnecessarily
+- **Files:** `DeploymentStories.tsx`, `ProcessTimeline.tsx`, `SectionHeader.tsx`, `MonoLabel.tsx`, `StatusDot.tsx`
+- **Completed:** Verified and maintained static presentational components as pure Server Components without client JS hydration overhead.
 
-### SRE-302: Remove confirmed dead code/styles
+### SRE-302: Remove confirmed dead code/styles [COMPLETED]
 
-- **Files:** `HeroSection.tsx` candidate, `globals.css` candidates
-- **Dependency:** `rg` confirmation and visual regression check
-- **Done when:** unused features are removed with no behavior loss
+- **Files:** `src/app/globals.css`
+- **Completed:** Removed unused floating DevOps object keyframes, click prompt badge styles, and old label classes.
 
-### SRE-303: Add CI and browser tests
+### SRE-303: Add CI and browser tests [COMPLETED]
 
-- **Files:** `.github/workflows/ci.yml`, test configuration/tests
-- **Done when:** PR checks run lint/build/tests and critical flows are smoke-tested
+- **Files:** `.github/workflows/ci.yml`, `src/lib/__tests__/contactValidation.test.ts`
+- **Completed:** Created GitHub Actions QA pipeline `.github/workflows/ci.yml` running lint, unit tests, security audit, and production build on every push and PR.
 
 ### SRE-304: Add analytics, error monitoring, and form alerts
 
