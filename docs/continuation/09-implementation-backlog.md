@@ -54,11 +54,10 @@ Use this backlog as a planning aid. Create one small branch/PR per item where pr
 - **Dependency:** client evidence/approval
 - **Done when:** each outcome is sourced, bounded, and approved for use
 
-### SRE-103: Improve hero proposition and CTA hierarchy
+### SRE-103: Improve hero proposition and CTA hierarchy [COMPLETED]
 
-- **Files:** `src/data/siteContent.ts`, `src/components/InteractivePipeline.tsx`, `Header.tsx`
-- **Deliverable:** outcome-led headline, commercial primary CTA, lifecycle secondary CTA
-- **Done when:** a new visitor understands offer and next step without entering dial
+- **Files:** `src/data/siteContent.ts`, `src/components/InteractivePipeline.tsx`
+- **Completed:** Updated hero copy to outcome-led value proposition ("Ship Faster Without Creating Release Risk") and commercial primary CTA ("Initiate Assessment").
 
 ### SRE-104: Add anchor offset and skip link [COMPLETED]
 
@@ -94,10 +93,10 @@ Use this backlog as a planning aid. Create one small branch/PR per item where pr
 - **Files:** `src/lib/icons.tsx`, `src/components/EngineeringDashboard.tsx`
 - **Completed:** Created centralized icon map (`SERVICE_ICON_MAP`) mapping service modules to Lucide React icons (`Rocket`, `Workflow`, `Boxes`, `Layers`, `ShieldCheck`, `Activity`).
 
-### SRE-204: Improve service/card transitions
+### SRE-204: Improve service/card transitions [COMPLETED]
 
-- **Files:** `EngineeringDashboard.tsx`, `TechEcosystem.tsx`, motion tokens
-- **Done when:** selection feedback feels intentional without layout shifts or excess motion
+- **Files:** `src/components/EngineeringDashboard.tsx`, `src/components/TechEcosystem.tsx`
+- **Completed:** Enhanced selection feedback transitions on capability and tech matrix cards with active status glow, category indicators, and subtle scaling without layout shift.
 
 ### SRE-205: Make pipeline responsive by breakpoint
 

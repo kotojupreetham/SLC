@@ -1,10 +1,12 @@
 export const SITE_CONTENT = {
   hero: {
     badge: "SMARTER RELEASE ENGINEERING",
-    headline: "Engineering Reliable",
-    headlineAccent: "Software Delivery.",
-    description: "We design, automate, and continuously improve software delivery systems. Step inside our live deployment pipeline.",
-    cta: "Explore Pipeline",
+    headline: "Ship Faster Without",
+    headlineAccent: "Creating Release Risk.",
+    description:
+      "SRE designs the delivery systems, guardrails, and observability that make reliable enterprise releases repeatable.",
+    cta: "Initiate Assessment",
+    secondaryCta: "Explore Lifecycle Dial",
   },
   footer: {
     copyright: "SMARTER RELEASE ENGINEERING (SRE). ALL RIGHTS RESERVED.",

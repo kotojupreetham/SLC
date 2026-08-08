@@ -6,6 +6,7 @@ import { SectionHeader } from "./atoms/SectionHeader";
 import { StatusDot } from "./atoms/StatusDot";
 import { MonoLabel } from "./atoms/MonoLabel";
 import { cn } from "@/lib/cn";
+import { Cpu } from "lucide-react";
 
 export function TechEcosystem() {
   const [activeTech, setActiveTech] = useState(TECH_NODES[0]);
@@ -27,10 +28,10 @@ export function TechEcosystem() {
                 key={node.id}
                 onClick={() => setActiveTech(node)}
                 className={cn(
-                  "p-5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-36",
+                  "p-5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-36 cursor-pointer",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090d16]",
                   isActive
-                    ? "bg-[#0f172a] border-[#38bdf8] ring-1 ring-[#38bdf8] shadow-[0_0_25px_rgba(56,189,248,0.2)]"
+                    ? "bg-[#0f172a] border-[#38bdf8] ring-1 ring-[#38bdf8] shadow-[0_0_25px_rgba(56,189,248,0.2)] scale-[1.02]"
                     : "bg-[#090d16] border-[rgba(255,255,255,0.08)] hover:border-[#334155] hover:bg-[#0f172a]/50"
                 )}
               >
@@ -47,23 +48,38 @@ export function TechEcosystem() {
           })}
         </div>
 
-        <div className="bg-[#0f172a] border border-[rgba(56,189,248,0.3)] rounded-2xl p-6 flex flex-col justify-between min-h-[300px]">
+        <div className="bg-[#0f172a] border border-[rgba(56,189,248,0.3)] rounded-2xl p-6 flex flex-col justify-between min-h-[340px] shadow-2xl relative overflow-hidden">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[rgba(255,255,255,0.08)] mb-4">
-              <MonoLabel className="text-[#38bdf8]">NODE INSPECTOR</MonoLabel>
-              <MonoLabel>{activeTech.category}</MonoLabel>
+            <div className="flex items-center justify-between pb-3 border-b border-[rgba(255,255,255,0.08)] mb-5">
+              <div className="flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-[#38bdf8]" />
+                <MonoLabel className="text-[#38bdf8]">NODE INSPECTOR</MonoLabel>
+              </div>
+              <MonoLabel className="text-[#64748b]">{activeTech.category}</MonoLabel>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">{activeTech.name}</h3>
-            <div className="inline-block px-2.5 py-1 rounded bg-[rgba(56,189,248,0.1)] border border-[rgba(56,189,248,0.2)] text-[#38bdf8] text-xs font-mono mb-4">
-              Pipeline Stage: {activeTech.pipelineStage}
+
+            <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">{activeTech.name}</h3>
+
+            <div className="space-y-3 mb-4">
+              <div>
+                <MonoLabel className="text-[#64748b] block mb-1">[ PIPELINE STAGE ]</MonoLabel>
+                <span className="inline-block px-3 py-1 rounded bg-[rgba(56,189,248,0.1)] border border-[rgba(56,189,248,0.2)] text-[#38bdf8] text-xs font-mono font-bold">
+                  {activeTech.pipelineStage}
+                </span>
+              </div>
+
+              <div>
+                <MonoLabel className="text-[#64748b] block mb-1">[ OPERATIONAL ROLE ]</MonoLabel>
+                <p className="text-[#cbd5e1] text-xs sm:text-sm leading-relaxed">{activeTech.roleDescription}</p>
+              </div>
             </div>
-            <p className="text-[#cbd5e1] text-sm leading-relaxed">{activeTech.roleDescription}</p>
           </div>
-          <div className="pt-4 border-t border-[rgba(255,255,255,0.08)] mt-6 flex items-center justify-between">
+
+          <div className="pt-4 border-t border-[rgba(255,255,255,0.08)] mt-4 flex items-center justify-between">
             <MonoLabel className="text-[#64748b]">STATUS: INTEGRATED</MonoLabel>
             <div className="flex items-center gap-1.5">
               <StatusDot status="healthy" />
-              <MonoLabel className="text-[#22c55e]">CONNECTED</MonoLabel>
+              <MonoLabel className="text-[#22c55e]">NOMINAL</MonoLabel>
             </div>
           </div>
         </div>
