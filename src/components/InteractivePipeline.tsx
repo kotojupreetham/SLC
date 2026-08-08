@@ -42,8 +42,8 @@ export function InteractivePipeline() {
   const heroContentRef = useRef<HTMLDivElement>(null);
   const wheelBoxRef = useRef<HTMLDivElement>(null);
   const wheelSvgRef = useRef<SVGSVGElement>(null);
-  const centerCardRef = useRef<HTMLDivElement>(null);
-  const cardInnerRef = useRef<HTMLDivElement>(null);
+  const centerTextRef = useRef<HTMLDivElement>(null);
+  const textInnerRef = useRef<HTMLDivElement>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const prefersReducedMotion = useReducedMotion();
@@ -63,7 +63,7 @@ export function InteractivePipeline() {
         y: isMobile ? "16vh" : "0vh",
         opacity: 1,
       });
-      gsap.set(centerCardRef.current, { opacity: 0, y: 40, scale: 0.9 });
+      gsap.set(centerTextRef.current, { opacity: 0, y: 30 });
 
       // 2. Master Scrollytelling Timeline
       const tl = gsap.timeline({
@@ -90,7 +90,7 @@ export function InteractivePipeline() {
         0
       );
 
-      // Scale & Move Wheel into Immersive Center View (Crisp, proportional scale)
+      // Scale & Move Wheel into Immersive Center View
       tl.to(
         wheelBoxRef.current,
         {
@@ -103,15 +103,14 @@ export function InteractivePipeline() {
         0
       );
 
-      // Fade & Slide in Center Glass Card (Independent of wheel scale)
+      // Fade in Floating Center Text (No Box Card)
       tl.to(
-        centerCardRef.current,
+        centerTextRef.current,
         {
           opacity: 1,
-          y: isMobile ? "15%" : "20%",
-          scale: 1,
+          y: isMobile ? "18%" : "22%",
           duration: 0.8,
-          ease: "back.out(1.4)",
+          ease: "power2.out",
         },
         0.5
       );
@@ -135,12 +134,12 @@ export function InteractivePipeline() {
 
             setActiveIndex((prev) => {
               if (prev !== newIndex) {
-                // Micro-interaction crossfade on center card
-                if (cardInnerRef.current) {
+                // Micro-interaction crossfade on center text when heading changes
+                if (textInnerRef.current) {
                   gsap.fromTo(
-                    cardInnerRef.current,
-                    { opacity: 0.25, y: -5 },
-                    { opacity: 1, y: 0, duration: 0.2, ease: "power1.out" }
+                    textInnerRef.current,
+                    { opacity: 0.2, y: -6 },
+                    { opacity: 1, y: 0, duration: 0.22, ease: "power1.out" }
                   );
                 }
                 return newIndex;
@@ -166,7 +165,7 @@ export function InteractivePipeline() {
       );
 
       tl.to(
-        centerCardRef.current,
+        centerTextRef.current,
         {
           opacity: 0,
           y: -40,
@@ -229,7 +228,7 @@ export function InteractivePipeline() {
           </div>
         </div>
 
-        {/* TOP TELEMETRY BAR (PHASE 3 & 4) */}
+        {/* TOP TELEMETRY BAR */}
         <div className="absolute top-20 left-6 right-6 z-30 flex justify-between items-center pointer-events-none">
           <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0f172a]/70 border border-[rgba(255,255,255,0.1)] backdrop-blur-md">
             <StatusDot status="healthy" pulse size="md" />
@@ -248,7 +247,7 @@ export function InteractivePipeline() {
           <div className="w-px h-8 bg-gradient-to-b from-[#38bdf8] to-transparent animate-pulse" />
         </div>
 
-        {/* NEON WHEEL BOX (PROPORTIONAL SIZING & CRISP VECTOR RENDERING) */}
+        {/* NEON WHEEL BOX */}
         <div
           ref={wheelBoxRef}
           className="relative w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] md:w-[580px] md:h-[580px] rounded-full flex items-center justify-center transform-gpu will-change-transform z-10"
@@ -336,43 +335,41 @@ export function InteractivePipeline() {
           </svg>
         </div>
 
-        {/* CENTER FROSTED GLASS CARD (CINEMATIC) */}
+        {/* PURE FLOATING TEXT INSIDE THE CIRCLE (NO CARD BOX / NO BORDER) */}
         <div
-          ref={centerCardRef}
+          ref={centerTextRef}
           aria-live="polite"
-          className="glass-panel absolute w-[290px] h-[290px] sm:w-[320px] sm:h-[320px] md:w-[350px] md:h-[350px] rounded-3xl flex flex-col justify-between items-center text-center p-5 sm:p-6 md:p-7 z-20 pointer-events-auto"
+          className="absolute z-20 pointer-events-none flex flex-col items-center justify-center text-center max-w-[280px] sm:max-w-[340px] px-4"
         >
-          <div ref={cardInnerRef} className="w-full flex flex-col items-center">
-            {/* Dynamic Icon */}
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[rgba(56,189,248,0.12)] border border-[rgba(56,189,248,0.35)] flex items-center justify-center mb-2.5 shadow-[0_0_25px_rgba(56,189,248,0.25)]">
+          <div ref={textInnerRef} className="flex flex-col items-center">
+            {/* Dynamic Stage Icon */}
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[rgba(56,189,248,0.12)] border border-[rgba(56,189,248,0.3)] flex items-center justify-center mb-3 shadow-[0_0_25px_rgba(56,189,248,0.3)]">
               <ActiveIcon className="w-6 h-6 sm:w-7 sm:h-7 text-[#38bdf8]" />
             </div>
 
-            {/* Stage Badge & Title */}
-            <MonoLabel className="text-[#38bdf8] mb-1">
+            {/* Stage Code Badge */}
+            <MonoLabel className="text-[#38bdf8] mb-1 tracking-widest">
               {activeStage.badge}
             </MonoLabel>
 
-            <h2 className="text-lg sm:text-2xl font-extrabold text-white tracking-tight mb-1.5">
+            {/* Dynamic Heading (Changes as user scrolls down) */}
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight mb-2 drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">
               {activeStage.title}
             </h2>
 
-            {/* Description */}
-            <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed mb-3 line-clamp-2">
+            {/* Description Text */}
+            <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed mb-4 max-w-xs">
               {activeStage.description}
             </p>
 
-            {/* Live Metric Badges */}
-            <div className="w-full grid grid-cols-2 gap-2 pt-2.5 border-t border-[rgba(255,255,255,0.08)]">
+            {/* Telemetry Metrics */}
+            <div className="flex items-center justify-center gap-4 text-left border-t border-[rgba(255,255,255,0.1)] pt-3 w-full">
               {activeStage.metrics.map((m, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col text-left px-2.5 py-1.5 rounded-xl bg-[#030712]/60 border border-[rgba(255,255,255,0.06)]"
-                >
-                  <span className="text-[9px] font-mono text-[#64748b] uppercase truncate">
+                <div key={i} className="flex flex-col">
+                  <span className="text-[9px] font-mono text-[#64748b] uppercase tracking-wider">
                     {m.label}
                   </span>
-                  <span className="text-xs font-mono font-bold text-[#38bdf8] truncate">
+                  <span className="text-xs font-mono font-bold text-[#38bdf8]">
                     {m.value}
                   </span>
                 </div>
@@ -380,8 +377,8 @@ export function InteractivePipeline() {
             </div>
           </div>
 
-          {/* 8-STAGE PAGINATION DOTS */}
-          <div className="flex items-center justify-center gap-1.5 pt-1.5">
+          {/* 8-STAGE PROGRESS DOTS */}
+          <div className="flex items-center justify-center gap-1.5 mt-4">
             {PIPELINE_STAGES.map((_, i) => (
               <span
                 key={i}
