@@ -49,40 +49,19 @@ export function InteractivePipeline() {
   const wheelSvgRef = useRef<SVGSVGElement>(null);
   const centerTextRef = useRef<HTMLDivElement>(null);
   const textInnerRef = useRef<HTMLDivElement>(null);
+  const clickPromptRef = useRef<HTMLDivElement>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isInitiated, setIsInitiated] = useState(false);
+  const [hasEntered, setHasEntered] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
-  // Function to initiate wheel zoom & rotation
-  const handleInitiate = useCallback(() => {
-    setIsInitiated(true);
-
-    if (typeof window === "undefined") return;
-    const isMobile = window.innerWidth < 768;
-
-    // Smooth GSAP expansion transition upon click
-    gsap.to(heroContentRef.current, {
-      x: -140,
-      opacity: 0,
-      duration: 0.9,
-      ease: "power2.inOut",
-    });
-
-    gsap.to(wheelBoxRef.current, {
-      scale: isMobile ? 1.15 : 1.45,
-      x: 0,
-      y: isMobile ? "22%" : "28%",
-      duration: 1.1,
-      ease: "power2.inOut",
-    });
-
-    gsap.to(centerTextRef.current, {
-      opacity: 1,
-      y: isMobile ? "18%" : "22%",
-      duration: 0.8,
-      delay: 0.3,
-      ease: "power2.out",
+  // Smooth scroll trigger on click
+  const handleInitiateClick = useCallback(() => {
+    if (!wrapperRef.current) return;
+    const targetScroll = wrapperRef.current.offsetTop + window.innerHeight * 0.8;
+    window.scrollTo({
+      top: targetScroll,
+      behavior: "smooth",
     });
   }, []);
 
@@ -93,7 +72,7 @@ export function InteractivePipeline() {
 
       const isMobile = window.innerWidth < 768;
 
-      // 1. Initial setup
+      // 1. Initial layout positioning
       gsap.set(heroContentRef.current, { x: 0, opacity: 1 });
       gsap.set(wheelBoxRef.current, {
         scale: isMobile ? 0.6 : 0.65,
@@ -102,8 +81,9 @@ export function InteractivePipeline() {
         opacity: 1,
       });
       gsap.set(centerTextRef.current, { opacity: 0, y: 30 });
+      gsap.set(clickPromptRef.current, { opacity: 1 });
 
-      // 2. Master Scrollytelling Timeline
+      // 2. Deterministic Master Timeline
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: wrapperRef.current,
@@ -112,16 +92,60 @@ export function InteractivePipeline() {
           pin: stickyRef.current,
           scrub: 1.2,
           anticipatePin: 1,
-          onUpdate: (self) => {
-            // If user scrolls past 5%, auto-initiate expansion if not already initiated
-            if (self.progress > 0.05 && !isInitiated) {
-              handleInitiate();
-            }
-          },
         },
       });
 
-      // Timeline stages matching rotation scrubbing
+      // --- PHASE 1 -> PHASE 2 & 3: ZOOM & MORPH INTO IMMERSIVE VIEW ---
+      // Fade out Hero Text
+      tl.to(
+        heroContentRef.current,
+        {
+          x: -140,
+          opacity: 0,
+          duration: 1,
+          ease: "power2.inOut",
+        },
+        0
+      );
+
+      // Fade out click prompt badge
+      tl.to(
+        clickPromptRef.current,
+        {
+          opacity: 0,
+          scale: 0.8,
+          duration: 0.5,
+          ease: "power2.out",
+        },
+        0
+      );
+
+      // Scale & Move Wheel into Immersive Center View
+      tl.to(
+        wheelBoxRef.current,
+        {
+          scale: isMobile ? 1.15 : 1.45,
+          x: 0,
+          y: isMobile ? "22%" : "28%",
+          duration: 1.2,
+          ease: "power2.inOut",
+        },
+        0
+      );
+
+      // Fade & Slide in Center Glass Text
+      tl.to(
+        centerTextRef.current,
+        {
+          opacity: 1,
+          y: isMobile ? "18%" : "22%",
+          duration: 0.8,
+          ease: "power2.out",
+        },
+        0.5
+      );
+
+      // --- PHASE 4: SCROLL THROUGH STAGES (SCRUB ROTATION ANTI-CLOCKWISE) ---
       const totalRotation = -315; // 8 stages * 45deg = 315deg sweep
 
       tl.to(
@@ -138,9 +162,9 @@ export function InteractivePipeline() {
               PIPELINE_STAGES.length - 1
             );
 
+            // Update UI state cleanly
             setActiveIndex((prev) => {
               if (prev !== newIndex) {
-                // Micro-interaction crossfade on center text when heading changes
                 if (textInnerRef.current) {
                   gsap.fromTo(
                     textInnerRef.current,
@@ -152,12 +176,19 @@ export function InteractivePipeline() {
               }
               return prev;
             });
+
+            // Update entered state for prompt badge
+            if (progress > 0.05 && !hasEntered) {
+              setHasEntered(true);
+            } else if (progress <= 0.05 && hasEntered) {
+              setHasEntered(false);
+            }
           },
         },
         1.2
       );
 
-      // --- FINISH & MOVE OUT ---
+      // --- PHASE 5: FINISH & MOVE OUT ---
       tl.to(
         wheelBoxRef.current,
         {
@@ -181,7 +212,7 @@ export function InteractivePipeline() {
         5.4
       );
     },
-    { scope: wrapperRef, dependencies: [prefersReducedMotion, isInitiated, handleInitiate] }
+    { scope: wrapperRef, dependencies: [prefersReducedMotion] }
   );
 
   const activeStage = PIPELINE_STAGES[activeIndex];
@@ -222,7 +253,7 @@ export function InteractivePipeline() {
 
           <div className="flex items-center gap-4">
             <button
-              onClick={handleInitiate}
+              onClick={handleInitiateClick}
               className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase hover:scale-105 transition-all shadow-[0_0_30px_rgba(56,189,248,0.5)] cursor-pointer"
             >
               <MousePointerClick className="w-4 h-4 animate-bounce" />
@@ -256,7 +287,7 @@ export function InteractivePipeline() {
         {/* NEON WHEEL BOX & FLOATING DEVOPS OBJECTS */}
         <div
           ref={wheelBoxRef}
-          onClick={handleInitiate}
+          onClick={handleInitiateClick}
           className="relative w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] md:w-[580px] md:h-[580px] rounded-full flex items-center justify-center transform-gpu will-change-transform z-10 cursor-pointer group"
         >
           {/* Outer Ring Glow Effect */}
@@ -284,12 +315,13 @@ export function InteractivePipeline() {
           </div>
 
           {/* CLICK TO INITIATE PROMPT BADGE (ACTIVE BEFORE ZOOM) */}
-          {!isInitiated && (
-            <div className="click-prompt-badge absolute top-1/2 left-1/2 z-30 px-5 py-3 rounded-full flex items-center gap-2.5 text-xs font-mono font-bold text-[#38bdf8] uppercase tracking-wider pointer-events-none">
-              <RotateCw className="w-4 h-4 animate-spin text-[#38bdf8]" />
-              <span>CLICK TO INITIATE ROTATION</span>
-            </div>
-          )}
+          <div
+            ref={clickPromptRef}
+            className="click-prompt-badge absolute top-1/2 left-1/2 z-30 px-5 py-3 rounded-full flex items-center gap-2.5 text-xs font-mono font-bold text-[#38bdf8] uppercase tracking-wider pointer-events-none"
+          >
+            <RotateCw className="w-4 h-4 animate-spin text-[#38bdf8]" />
+            <span>CLICK TO INITIATE ROTATION</span>
+          </div>
 
           <svg
             ref={wheelSvgRef}
@@ -388,7 +420,7 @@ export function InteractivePipeline() {
               {activeStage.badge}
             </MonoLabel>
 
-            {/* Dynamic Heading (Changes as user scrolls down) */}
+            {/* Dynamic Heading */}
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight mb-2 drop-shadow-[0_0_25px_rgba(56,189,248,0.4)]">
               {activeStage.title}
             </h2>
