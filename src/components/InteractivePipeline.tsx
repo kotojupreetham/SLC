@@ -17,9 +17,6 @@ import {
   CloudUpload,
   Settings,
   BarChart3,
-  GitBranch,
-  Cloud,
-  Lock,
   ChevronDown,
 } from "lucide-react";
 
@@ -40,19 +37,17 @@ const STAGE_ICONS = [
 
 // Vibrant wedge colors matching DevOps reference diagram
 const WEDGE_COLORS = [
-  { main: "#0284c7", glow: "rgba(2, 132, 199, 0.4)", text: "#7dd3fc" }, // Plan: Sky Blue
-  { main: "#2563eb", glow: "rgba(37, 99, 235, 0.4)", text: "#93c5fd" }, // Code: Royal Blue
-  { main: "#4f46e5", glow: "rgba(79, 70, 229, 0.4)", text: "#a5b4fc" }, // Build: Indigo
-  { main: "#7c3aed", glow: "rgba(124, 58, 237, 0.4)", text: "#c4b5fd" }, // Test: Purple
-  { main: "#db2777", glow: "rgba(219, 39, 119, 0.4)", text: "#fbcfe8" }, // Release: Pink
-  { main: "#059669", glow: "rgba(5, 150, 105, 0.4)", text: "#6ee7b7" }, // Deploy: Emerald
-  { main: "#d97706", glow: "rgba(217, 119, 6, 0.4)", text: "#fde68a" }, // Operate: Amber
-  { main: "#0891b2", glow: "rgba(8, 145, 178, 0.4)", text: "#67e8f9" }, // Monitor: Cyan
+  { main: "#0284c7", glow: "rgba(2, 132, 199, 0.4)", text: "#7dd3fc" },
+  { main: "#2563eb", glow: "rgba(37, 99, 235, 0.4)", text: "#93c5fd" },
+  { main: "#4f46e5", glow: "rgba(79, 70, 229, 0.4)", text: "#a5b4fc" },
+  { main: "#7c3aed", glow: "rgba(124, 58, 237, 0.4)", text: "#c4b5fd" },
+  { main: "#db2777", glow: "rgba(219, 39, 119, 0.4)", text: "#fbcfe8" },
+  { main: "#059669", glow: "rgba(5, 150, 105, 0.4)", text: "#6ee7b7" },
+  { main: "#d97706", glow: "rgba(217, 119, 6, 0.4)", text: "#fde68a" },
+  { main: "#0891b2", glow: "rgba(8, 145, 178, 0.4)", text: "#67e8f9" },
 ];
 
 // Pre-calculated 45-degree wedge sector path (Center: 700, 700)
-// Outer radius R = 560, Inner radius r = 400
-// Angle range: -112.5° to -67.5° (Top centered wedge)
 const WEDGE_PATH = "M 485.7 182.6 A 560 560 0 0 1 914.3 182.6 L 853.1 330.5 A 400 400 0 0 0 546.9 330.5 Z";
 
 export function InteractivePipeline() {
@@ -70,9 +65,8 @@ export function InteractivePipeline() {
       if (typeof window === "undefined") return;
 
       const totalStages = PIPELINE_STAGES.length;
-      const totalRotation = -(totalStages - 1) * 45; // -315 degrees sweep
+      const totalRotation = -(totalStages - 1) * 45;
 
-      // GSAP ScrollTrigger timeline pinned section with mechanical snap
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: wrapperRef.current,
@@ -165,7 +159,7 @@ export function InteractivePipeline() {
           </div>
 
           <div ref={textInnerRef} className="flex flex-col items-center">
-            {/* Dynamic Stage Icon in Glowing Glass Badge */}
+            {/* Dynamic Stage Icon */}
             <div
               className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-[#0f172a]/90 border border-[rgba(255,255,255,0.15)] flex items-center justify-center mb-4 backdrop-blur-xl transition-all duration-300"
               style={{
@@ -176,7 +170,6 @@ export function InteractivePipeline() {
               <ActiveIcon className="w-8 h-8 sm:w-10 sm:h-10 transition-colors" style={{ color: activeColor.text }} />
             </div>
 
-            {/* Badge & Subtitle */}
             <MonoLabel className="mb-2 tracking-widest text-xs font-bold" style={{ color: activeColor.text }}>
               {activeStage.badge}
             </MonoLabel>
@@ -186,7 +179,7 @@ export function InteractivePipeline() {
               {activeStage.title}
             </h2>
 
-            {/* Stage Description */}
+            {/* Description */}
             <p className="text-sm sm:text-base text-[#94a3b8] leading-relaxed mb-6 max-w-xl">
               {activeStage.description}
             </p>
@@ -209,7 +202,7 @@ export function InteractivePipeline() {
             </div>
           </div>
 
-          {/* 8-Stage Progress Indicator */}
+          {/* 8-Stage Progress Dots */}
           <div className="flex items-center justify-center gap-2 mt-6">
             {PIPELINE_STAGES.map((s, idx) => (
               <button
@@ -232,7 +225,7 @@ export function InteractivePipeline() {
           </div>
 
           <div className="flex items-center gap-2 mt-4 text-[11px] font-mono text-[#64748b] animate-bounce">
-            <span>SCROLL DOWN TO ROTATE MECHANICAL DIAL</span>
+            <span>SCROLL TO ROTATE DIAL</span>
             <ChevronDown className="w-3.5 h-3.5 text-[#38bdf8]" />
           </div>
         </div>
@@ -240,28 +233,7 @@ export function InteractivePipeline() {
         {/* --- GIANT ROTATING MECHANICAL DIAL (CLIPPED AT BOTTOM VIEWPORT MASK) --- */}
         <div className="absolute -bottom-[540px] sm:-bottom-[640px] md:-bottom-[720px] left-1/2 -translate-x-1/2 w-[1100px] h-[1100px] sm:w-[1300px] sm:h-[1300px] md:w-[1450px] md:h-[1450px] pointer-events-auto z-20">
 
-          {/* FLOATING RELATIONAL DEVOPS OBJECTS FLOATING AROUND THE ARC */}
-          <div className="floating-devops-obj obj-delay-1 top-[8%] left-[12%] px-3.5 py-2 rounded-2xl bg-[#0f172a]/90 border border-[rgba(56,189,248,0.4)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#38bdf8] shadow-[0_0_20px_rgba(56,189,248,0.3)]">
-            <GitBranch className="w-4 h-4 text-[#38bdf8]" />
-            <span>git-branch: main</span>
-          </div>
-
-          <div className="floating-devops-obj obj-delay-2 top-[8%] right-[12%] px-3.5 py-2 rounded-2xl bg-[#0f172a]/90 border border-[rgba(129,140,248,0.4)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#818cf8] shadow-[0_0_20px_rgba(129,140,248,0.3)]">
-            <Cloud className="w-4 h-4 text-[#818cf8]" />
-            <span>k8s-pod: active</span>
-          </div>
-
-          <div className="floating-devops-obj obj-delay-3 top-[28%] left-[2%] px-3.5 py-2 rounded-2xl bg-[#0f172a]/90 border border-[rgba(34,197,94,0.4)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#22c55e] shadow-[0_0_20px_rgba(34,197,94,0.3)]">
-            <Box className="w-4 h-4 text-[#22c55e]" />
-            <span>docker: build:ok</span>
-          </div>
-
-          <div className="floating-devops-obj obj-delay-1 top-[28%] right-[2%] px-3.5 py-2 rounded-2xl bg-[#0f172a]/90 border border-[rgba(245,158,11,0.4)] backdrop-blur-md flex items-center gap-2 text-xs font-mono text-[#f59e0b] shadow-[0_0_20px_rgba(245,158,11,0.3)]">
-            <Lock className="w-4 h-4 text-[#f59e0b]" />
-            <span>sec-gate: zero-vuln</span>
-          </div>
-
-          {/* Outer Glowing Ambient Ring Container */}
+          {/* Outer Glowing Ambient Ring */}
           <div className="absolute inset-0 rounded-full border-2 border-[rgba(56,189,248,0.25)] shadow-[0_0_120px_rgba(56,189,248,0.15),inset_0_0_80px_rgba(56,189,248,0.08)] pointer-events-none" />
 
           {/* ROTATING SVG LIFE-CYCLE WHEEL */}
@@ -322,7 +294,7 @@ export function InteractivePipeline() {
                     className="transition-all duration-300 group-hover:fill-opacity-90"
                   />
 
-                  {/* BOLD LARGE STAGE TEXT ON THE WHEEL */}
+                  {/* BOLD LARGE STAGE TEXT */}
                   <text
                     x="700"
                     y="235"
@@ -348,7 +320,6 @@ export function InteractivePipeline() {
                       strokeWidth="2.5"
                       className="transition-all duration-300"
                     />
-                    {/* SVG Icon inside badge */}
                     <g transform={isActive ? "translate(-14, -14) scale(1.16)" : "translate(-12, -12) scale(1)"}>
                       <IconComp
                         className="w-6 h-6 transition-colors"
