@@ -3,19 +3,62 @@
 import React, { useState } from "react";
 import { MonoLabel } from "./atoms/MonoLabel";
 import { StatusDot } from "./atoms/StatusDot";
+import { validateContactSubmission, ValidationResult } from "@/lib/contactValidation";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 export function ContactNode() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     projectDetails: "",
+    honeypot: "", // hidden field
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [fieldErrors, setFieldErrors] = useState<ValidationResult["errors"]>({});
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email) return;
-    setSubmitted(true);
+    setServerError(null);
+
+    // Client-side pre-validation
+    const validation = validateContactSubmission(formData);
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      return;
+    }
+
+    setFieldErrors({});
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        if (data.errors) {
+          setFieldErrors(data.errors);
+        }
+        setServerError(data.message || "Transmission failed. Please check inputs and retry.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      console.error("Submission error:", err);
+      setServerError("Network error encountered. Your input has been preserved—please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -34,31 +77,65 @@ export function ContactNode() {
             </MonoLabel>
           </div>
           <div className="flex items-center gap-2">
-            <StatusDot status="accent" />
-            <MonoLabel className="text-[#38bdf8]">SECURE TRANSMISSION</MonoLabel>
+            <StatusDot status={submitted ? "healthy" : "accent"} />
+            <MonoLabel className={submitted ? "text-[#22c55e]" : "text-[#38bdf8]"}>
+              {submitted ? "PAYLOAD DISPATCHED" : "SECURE TRANSMISSION"}
+            </MonoLabel>
           </div>
         </div>
 
         {!submitted ? (
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+            {/* Honeypot field (hidden from real users) */}
+            <div className="hidden" aria-hidden="true">
+              <label htmlFor="website-hp">Leave this empty</label>
+              <input
+                id="website-hp"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={formData.honeypot}
+                onChange={(e) => setFormData({ ...formData, honeypot: e.target.value })}
+              />
+            </div>
+
+            {/* Server Error Banner */}
+            {serverError && (
+              <div
+                role="alert"
+                className="flex items-start gap-3 p-4 rounded-lg bg-[#ef4444]/10 border border-[#ef4444]/40 text-[#fca5a5] text-xs font-mono"
+              >
+                <AlertCircle className="w-4 h-4 text-[#ef4444] shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-[#f87171]">TRANSMISSION ERROR</p>
+                  <p>{serverError}</p>
+                </div>
+              </div>
+            )}
+
             <div>
               <label
                 htmlFor="contact-name"
                 className="block text-xs font-mono text-[#94a3b8] uppercase mb-2 tracking-wider"
               >
-                Engineer / Organization Name
+                Engineer / Organization Name <span className="text-[#38bdf8]">*</span>
               </label>
               <input
                 id="contact-name"
                 type="text"
                 required
+                disabled={isSubmitting}
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value });
+                  if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: undefined });
+                }}
                 placeholder="e.g., Jane Doe, VP of Engineering"
-                className="w-full bg-[#090d16] border border-[rgba(255,255,255,0.08)] rounded-lg p-3 text-sm text-white font-mono placeholder:text-[#334155] focus:outline-none focus:border-[#38bdf8] transition-colors"
+                className="w-full bg-[#090d16] border border-[rgba(255,255,255,0.08)] rounded-lg p-3 text-sm text-white font-mono placeholder:text-[#334155] focus:outline-none focus:border-[#38bdf8] transition-colors disabled:opacity-50"
               />
+              {fieldErrors.name && (
+                <p className="mt-1.5 text-xs font-mono text-[#f87171]">{fieldErrors.name}</p>
+              )}
             </div>
 
             <div>
@@ -66,19 +143,24 @@ export function ContactNode() {
                 htmlFor="contact-email"
                 className="block text-xs font-mono text-[#94a3b8] uppercase mb-2 tracking-wider"
               >
-                Work Email Address
+                Work Email Address <span className="text-[#38bdf8]">*</span>
               </label>
               <input
                 id="contact-email"
                 type="email"
                 required
+                disabled={isSubmitting}
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value });
+                  if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: undefined });
+                }}
                 placeholder="jane@company.com"
-                className="w-full bg-[#090d16] border border-[rgba(255,255,255,0.08)] rounded-lg p-3 text-sm text-white font-mono placeholder:text-[#334155] focus:outline-none focus:border-[#38bdf8] transition-colors"
+                className="w-full bg-[#090d16] border border-[rgba(255,255,255,0.08)] rounded-lg p-3 text-sm text-white font-mono placeholder:text-[#334155] focus:outline-none focus:border-[#38bdf8] transition-colors disabled:opacity-50"
               />
+              {fieldErrors.email && (
+                <p className="mt-1.5 text-xs font-mono text-[#f87171]">{fieldErrors.email}</p>
+              )}
             </div>
 
             <div>
@@ -86,38 +168,60 @@ export function ContactNode() {
                 htmlFor="contact-details"
                 className="block text-xs font-mono text-[#94a3b8] uppercase mb-2 tracking-wider"
               >
-                System Infrastructure & Objectives
+                System Infrastructure & Objectives <span className="text-[#38bdf8]">*</span>
               </label>
               <textarea
                 id="contact-details"
                 rows={4}
                 required
+                disabled={isSubmitting}
                 value={formData.projectDetails}
-                onChange={(e) =>
-                  setFormData({ ...formData, projectDetails: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, projectDetails: e.target.value });
+                  if (fieldErrors.projectDetails)
+                    setFieldErrors({ ...fieldErrors, projectDetails: undefined });
+                }}
                 placeholder="Describe deployment bottlenecks, target uptime goals, or cloud migration parameters..."
-                className="w-full bg-[#090d16] border border-[rgba(255,255,255,0.08)] rounded-lg p-3 text-sm text-white font-mono placeholder:text-[#334155] focus:outline-none focus:border-[#38bdf8] transition-colors resize-none"
+                className="w-full bg-[#090d16] border border-[rgba(255,255,255,0.08)] rounded-lg p-3 text-sm text-white font-mono placeholder:text-[#334155] focus:outline-none focus:border-[#38bdf8] transition-colors resize-none disabled:opacity-50"
               />
+              {fieldErrors.projectDetails && (
+                <p className="mt-1.5 text-xs font-mono text-[#f87171]">{fieldErrors.projectDetails}</p>
+              )}
             </div>
 
             <button
               type="submit"
-              className="w-full py-4 rounded-lg bg-[#38bdf8] text-[#090d16] font-mono font-bold text-sm tracking-wider uppercase hover:bg-[#38bdf8]/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090d16]"
+              disabled={isSubmitting}
+              className="w-full py-4 rounded-lg bg-[#38bdf8] text-[#090d16] font-mono font-bold text-sm tracking-wider uppercase hover:bg-[#38bdf8]/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090d16] disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
             >
-              EXECUTE PIPELINE INITIATION
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-[#090d16]" />
+                  <span>TRANSMITTING PAYLOAD...</span>
+                </>
+              ) : (
+                <span>EXECUTE PIPELINE INITIATION</span>
+              )}
             </button>
           </form>
         ) : (
           <div className="py-16 text-center font-mono space-y-4">
-            <span className="text-[#22c55e] text-4xl block">✓</span>
-            <h3 className="text-xl font-bold text-white">
+            <CheckCircle2 className="w-12 h-12 text-[#22c55e] mx-auto animate-pulse" />
+            <h3 className="text-xl font-bold text-white tracking-wide">
               TRANSMISSION RECEIVED
             </h3>
             <p className="text-[#94a3b8] text-xs max-w-md mx-auto leading-relaxed">
-              Pipeline payload dispatched. An SRE technical architect will
-              evaluate your specifications and connect within 24 hours.
+              Your engineering specifications have been successfully validated and logged. An SRE technical architect will evaluate your requirements and connect via email.
             </p>
+            <button
+              onClick={() => {
+                setSubmitted(false);
+                setFormData({ name: "", email: "", projectDetails: "", honeypot: "" });
+              }}
+              className="mt-4 px-6 py-2 rounded border border-[rgba(255,255,255,0.15)] text-xs text-[#94a3b8] hover:text-white hover:border-[#38bdf8] transition-colors cursor-pointer"
+            >
+              Submit Another Inquiry
+            </button>
           </div>
         )}
       </div>

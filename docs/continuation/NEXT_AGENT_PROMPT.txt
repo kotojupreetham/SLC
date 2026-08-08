@@ -1,0 +1,38 @@
+You are continuing work on the Smarter Release Engineering website at:
+
+C:\Project\sre-website
+
+Before making any changes:
+
+1. Read `PROJECT_IMPROVEMENT_HANDOFF.md`.
+2. Read every file in `docs/continuation/`, starting with `README.md` and `00-current-state.md`.
+3. Run `git status --short` and preserve existing user changes.
+4. Do not edit unrelated files or use destructive Git commands.
+5. Use `npm.cmd` instead of `npm` in PowerShell.
+
+Project intent:
+
+This is a premium Next.js/TypeScript/Tailwind/GSAP marketing site for an SRE consultancy. Preserve the dark control-room identity and lifecycle dial, but prioritise truthful claims, working lead capture, reduced-motion support, keyboard access, mobile performance, and reliable GSAP cleanup.
+
+Start with the first unfinished P0 backlog item in:
+
+docs/continuation/09-implementation-backlog.md
+
+Important constraints:
+
+- Do not show a form success state until data has actually reached a real destination.
+- Do not present static mock data as live telemetry.
+- Do not rely on animation for essential content.
+- Every pointer interaction needs an equally usable keyboard/reduced-motion path.
+- Do not add visual effects until launch blockers are complete.
+- After each meaningful code change, run:
+  - `npm.cmd run lint`
+  - `npm.cmd run build`
+- Add or update tests for critical behavior.
+
+At the end of each work session:
+
+- Summarise implemented changes.
+- List exact files changed.
+- Record remaining risks in the relevant `docs/continuation/*.md` file.
+- Do not claim production readiness unless the release checks in `08-testing-and-release-qa.md` are complete.
