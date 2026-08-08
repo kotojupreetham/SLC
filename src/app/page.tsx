@@ -1,4 +1,3 @@
-import { HeroSection } from "@/components/HeroSection";
 import { InteractivePipeline } from "@/components/InteractivePipeline";
 import { EngineeringDashboard } from "@/components/EngineeringDashboard";
 import { TechEcosystem } from "@/components/TechEcosystem";
@@ -10,15 +9,14 @@ import { SITE_CONTENT } from "@/data/siteContent";
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
-      {/* Hero — Curiosity */}
-      <HeroSection />
-
-      {/* Immersive Pipeline — Immersion */}
+    <main className="min-h-screen bg-[#030308] text-white">
+      {/* 5-Phase Scrollytelling DevOps Experience (Hero -> Zoom -> Arc Scrub -> Move Out) */}
       <InteractivePipeline />
 
       {/* Services Console — Trust */}
-      <EngineeringDashboard />
+      <div id="services">
+        <EngineeringDashboard />
+      </div>
 
       {/* Technology Matrix — Confidence */}
       <TechEcosystem />
@@ -29,14 +27,14 @@ export default function Home() {
       {/* Process — Clarity */}
       <ProcessTimeline />
 
-      {/* Control Room — Wow */}
+      {/* Control Room — Telemetry Dashboard */}
       <ControlRoom />
 
-      {/* Contact — Action */}
+      {/* Contact Terminal */}
       <ContactNode />
 
       {/* Footer */}
-      <footer className="py-8 text-center border-t border-[rgba(255,255,255,0.08)]">
+      <footer className="py-8 text-center border-t border-[rgba(255,255,255,0.08)] bg-[#030308]">
         <p className="text-xs font-mono text-[#475569] tracking-wider">
           © {new Date().getFullYear()} {SITE_CONTENT.footer.copyright}
         </p>

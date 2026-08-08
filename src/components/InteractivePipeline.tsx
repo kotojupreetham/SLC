@@ -8,165 +8,387 @@ import { PIPELINE_STAGES } from "@/data/pipelineStages";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { MonoLabel } from "./atoms/MonoLabel";
 import { StatusDot } from "./atoms/StatusDot";
+import { GlowBadge } from "./atoms/GlowBadge";
+import { SITE_CONTENT } from "@/data/siteContent";
+import {
+  ClipboardList,
+  Code2,
+  Box,
+  ShieldCheck,
+  Rocket,
+  CloudUpload,
+  Settings,
+  BarChart3,
+} from "lucide-react";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+const STAGE_ICONS = [
+  ClipboardList, // 01: Plan
+  Code2,         // 02: Code
+  Box,           // 03: Build
+  ShieldCheck,   // 04: Test
+  Rocket,        // 05: Release
+  CloudUpload,   // 06: Deploy
+  Settings,      // 07: Operate
+  BarChart3,     // 08: Monitor
+];
+
 export function InteractivePipeline() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const wheelRef = useRef<SVGSVGElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const stickyRef = useRef<HTMLDivElement>(null);
+  const heroContentRef = useRef<HTMLDivElement>(null);
+  const wheelBoxRef = useRef<HTMLDivElement>(null);
+  const wheelSvgRef = useRef<SVGSVGElement>(null);
+  const centerCardRef = useRef<HTMLDivElement>(null);
+  const cardInnerRef = useRef<HTMLDivElement>(null);
+
   const [activeIndex, setActiveIndex] = useState(0);
   const prefersReducedMotion = useReducedMotion();
 
   useGSAP(
     () => {
       if (prefersReducedMotion) return;
-      if (typeof window === "undefined" || window.innerWidth < 768) return;
+      if (typeof window === "undefined") return;
 
-      const totalRotation = -360 * 3;
+      const isMobile = window.innerWidth < 768;
 
-      ScrollTrigger.create({
-        trigger: containerRef.current,
-        start: "top top",
-        end: "+=3500",
-        pin: true,
-        scrub: 0.5,
-        anticipatePin: 1,
-        onUpdate: (self) => {
-          const currentAngle = self.progress * totalRotation;
+      // 1. Initial positions
+      gsap.set(heroContentRef.current, { x: 0, opacity: 1 });
+      gsap.set(wheelBoxRef.current, {
+        scale: isMobile ? 0.55 : 0.5,
+        x: isMobile ? 0 : "22vw",
+        y: isMobile ? "20vh" : "0vh",
+        opacity: 1,
+      });
+      gsap.set(centerCardRef.current, { opacity: 0, y: 30, scale: 0.9 });
 
-          if (wheelRef.current) {
-            gsap.set(wheelRef.current, {
-              rotate: currentAngle,
-              force3D: true,
-            });
-          }
-
-          const normalizedAngle = ((-currentAngle % 360) + 360) % 360;
-          const stageStep = 360 / PIPELINE_STAGES.length;
-          const index = Math.floor(
-            ((normalizedAngle + stageStep / 2) % 360) / stageStep
-          );
-
-          setActiveIndex(index);
+      // 2. Master Scrollytelling Timeline
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: wrapperRef.current,
+          start: "top top",
+          end: "+=4000",
+          pin: stickyRef.current,
+          scrub: 1.2,
+          anticipatePin: 1,
         },
       });
+
+      // --- PHASE 1 -> PHASE 2 & 3: ZOOM & MORPH INTO IMMERSIVE VIEW ---
+      // Fade out Hero Text
+      tl.to(
+        heroContentRef.current,
+        {
+          x: -120,
+          opacity: 0,
+          duration: 1,
+          ease: "power2.inOut",
+        },
+        0
+      );
+
+      // Scale & Move Wheel into Immersive Center View
+      tl.to(
+        wheelBoxRef.current,
+        {
+          scale: isMobile ? 1.45 : 2.25,
+          x: 0,
+          y: isMobile ? "28%" : "36%",
+          duration: 1.2,
+          ease: "power2.inOut",
+        },
+        0
+      );
+
+      // Fade & Slide in Center Glass Card
+      tl.to(
+        centerCardRef.current,
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.8,
+          ease: "back.out(1.4)",
+        },
+        0.5
+      );
+
+      // --- PHASE 4: SCROLL THROUGH STAGES (SCRUB ROTATION ANTI-CLOCKWISE) ---
+      const totalRotation = -315; // 8 stages * 45deg = 315deg sweep
+
+      tl.to(
+        wheelSvgRef.current,
+        {
+          rotate: totalRotation,
+          duration: 4,
+          ease: "none",
+          onUpdate: function () {
+            const progress = this.progress();
+            const rawIndex = Math.round(progress * (PIPELINE_STAGES.length - 1));
+            const newIndex = Math.min(
+              Math.max(rawIndex, 0),
+              PIPELINE_STAGES.length - 1
+            );
+
+            setActiveIndex((prev) => {
+              if (prev !== newIndex) {
+                // Micro-interaction crossfade on center card
+                if (cardInnerRef.current) {
+                  gsap.fromTo(
+                    cardInnerRef.current,
+                    { opacity: 0.3, y: -4 },
+                    { opacity: 1, y: 0, duration: 0.2, ease: "power1.out" }
+                  );
+                }
+                return newIndex;
+              }
+              return prev;
+            });
+          },
+        },
+        1.2
+      );
+
+      // --- PHASE 5: FINISH & MOVE OUT ---
+      tl.to(
+        wheelBoxRef.current,
+        {
+          x: "80vw",
+          opacity: 0,
+          scale: 1.8,
+          duration: 1,
+          ease: "power2.in",
+        },
+        5.4
+      );
+
+      tl.to(
+        centerCardRef.current,
+        {
+          opacity: 0,
+          y: -30,
+          duration: 0.6,
+          ease: "power2.in",
+        },
+        5.4
+      );
     },
-    { scope: containerRef, dependencies: [prefersReducedMotion] }
+    { scope: wrapperRef, dependencies: [prefersReducedMotion] }
   );
 
   const activeStage = PIPELINE_STAGES[activeIndex];
+  const ActiveIcon = STAGE_ICONS[activeIndex] || ClipboardList;
 
   return (
-    <section
-      id="pipeline"
-      ref={containerRef}
-      className="relative w-full h-screen bg-[#090d16] overflow-hidden flex items-center justify-center px-4"
-    >
-      {/* Background grid */}
+    <div ref={wrapperRef} className="relative w-full bg-[#030308] text-white">
+      {/* Ambient background glowing orbs */}
+      <div className="ambient-orb orb-1" />
+      <div className="ambient-orb orb-2" />
+
+      {/* Background Subtle Grid */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
 
-      {/* Frame */}
-      <div className="relative w-full max-w-5xl h-[85vh] border border-[rgba(255,255,255,0.08)] rounded-2xl bg-[#0f172a]/40 backdrop-blur-md flex items-center justify-center shadow-2xl overflow-hidden">
-        {/* Top telemetry bar */}
-        <div className="absolute top-5 left-6 right-6 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <StatusDot status="healthy" pulse size="md" />
-            <MonoLabel className="text-[#38bdf8]">LIVE PIPELINE STREAM</MonoLabel>
+      {/* Sticky Viewport Container */}
+      <div
+        ref={stickyRef}
+        className="relative h-screen w-full flex items-center justify-center overflow-hidden"
+      >
+        {/* HERO CONTENT (PHASE 1: START SMALL) */}
+        <div
+          ref={heroContentRef}
+          className="absolute left-6 md:left-16 lg:left-24 max-w-xl z-20 pointer-events-auto"
+        >
+          <GlowBadge className="mb-6">{SITE_CONTENT.hero.badge}</GlowBadge>
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-[1.02]">
+            {SITE_CONTENT.hero.headline}{" "}
+            <span className="bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] bg-clip-text text-transparent">
+              {SITE_CONTENT.hero.headlineAccent}
+            </span>
+          </h1>
+
+          <p className="text-[#94a3b8] text-sm sm:text-base leading-relaxed mb-8">
+            {SITE_CONTENT.hero.description}
+          </p>
+
+          <div className="flex items-center gap-4">
+            <a
+              href="#services"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#38bdf8] text-[#030308] font-mono font-bold text-xs tracking-wider uppercase hover:bg-[#38bdf8]/90 transition-colors shadow-[0_0_20px_rgba(56,189,248,0.3)]"
+            >
+              {SITE_CONTENT.hero.cta}
+              <span className="text-base">↓</span>
+            </a>
+            <span className="text-xs font-mono text-[#64748b]">
+              SCROLL TO START
+            </span>
           </div>
-          <MonoLabel>SCROLL TO NAVIGATE</MonoLabel>
         </div>
 
-        {/* Top pointer */}
-        <div className="absolute top-14 z-20 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-[#38bdf8] drop-shadow-[0_0_8px_rgba(56,189,248,0.6)]" />
+        {/* TOP TELEMETRY BAR & POINTER (PHASE 3 & 4) */}
+        <div className="absolute top-6 left-6 right-6 z-30 flex justify-between items-center pointer-events-none">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0f172a]/60 border border-[rgba(255,255,255,0.08)] backdrop-blur-md">
+            <StatusDot status="healthy" pulse size="md" />
+            <MonoLabel className="text-[#38bdf8]">
+              DEV OPS LIFECYCLE SCRUB
+            </MonoLabel>
+          </div>
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0f172a]/60 border border-[rgba(255,255,255,0.08)] backdrop-blur-md">
+            <MonoLabel className="text-[#94a3b8]">STAGE 0{activeIndex + 1} / 08</MonoLabel>
+          </div>
+        </div>
 
-        {/* Wheel */}
-        <div className="relative w-[300px] h-[300px] sm:w-[420px] sm:h-[420px] md:w-[480px] md:h-[480px] flex items-center justify-center">
+        {/* TOP CENTER ALIGNMENT POINTER */}
+        <div className="absolute top-16 z-30 pointer-events-none flex flex-col items-center">
+          <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-[#38bdf8] drop-shadow-[0_0_12px_rgba(56,189,248,0.8)]" />
+          <div className="w-px h-6 bg-gradient-to-b from-[#38bdf8] to-transparent animate-pulse" />
+        </div>
+
+        {/* NEON WHEEL BOX (PHASES 1 - 5) */}
+        <div
+          ref={wheelBoxRef}
+          className="relative w-[540px] h-[540px] sm:w-[640px] sm:h-[640px] md:w-[720px] md:h-[720px] rounded-full flex items-center justify-center transform-gpu will-change-transform z-10"
+        >
+          {/* Outer Ring Glow Effect */}
+          <div className="absolute inset-0 rounded-full border border-[rgba(56,189,248,0.2)] shadow-[0_0_80px_rgba(56,189,248,0.1),inset_0_0_50px_rgba(56,189,248,0.08)]" />
+
           <svg
-            ref={wheelRef}
-            viewBox="0 0 500 500"
+            ref={wheelSvgRef}
+            viewBox="0 0 600 600"
             className="w-full h-full transform-gpu will-change-transform"
             role="img"
-            aria-label="DevOps pipeline lifecycle wheel showing 8 stages"
+            aria-label="DevOps lifecycle wheel diagram showing 8 interactive stages"
           >
             <defs>
-              <linearGradient id="ringGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#818cf8" stopOpacity="0.2" />
+              <linearGradient
+                id="ringGlowGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+              >
+                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.9" />
+                <stop offset="50%" stopColor="#60a5fa" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#818cf8" stopOpacity="0.8" />
               </linearGradient>
+
+              <filter id="neonGlowFilter" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
             </defs>
 
-            {/* Outer ring */}
-            <circle cx="250" cy="250" r="235" fill="none" stroke="url(#ringGlow)" strokeWidth="3" />
-            {/* Inner dashed ring */}
-            <circle cx="250" cy="250" r="160" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="4 4" />
+            {/* Outer primary ring */}
+            <circle
+              cx="300"
+              cy="300"
+              r="275"
+              fill="none"
+              stroke="url(#ringGlowGradient)"
+              strokeWidth="3.5"
+            />
+            {/* Inner guideline ring */}
+            <circle
+              cx="300"
+              cy="300"
+              r="190"
+              fill="none"
+              stroke="rgba(255, 255, 255, 0.08)"
+              strokeWidth="1.5"
+              strokeDasharray="6 6"
+            />
 
-            {/* Stage nodes */}
+            {/* 8 STAGE NODES & LABELS CURVED AROUND WHEEL */}
             {PIPELINE_STAGES.map((stage, idx) => {
               const angle = idx * (360 / PIPELINE_STAGES.length);
               const isActive = idx === activeIndex;
+
               return (
-                <g key={stage.id} transform={`rotate(${angle}, 250, 250)`}>
+                <g key={stage.id} transform={`rotate(${angle}, 300, 300)`}>
+                  {/* Stage Text Label */}
                   <text
-                    x="250"
+                    x="300"
                     y="42"
-                    fill={isActive ? "#38bdf8" : "#f8fafc"}
-                    fontSize="11"
-                    fontWeight="700"
-                    fontFamily="monospace"
                     textAnchor="middle"
-                    letterSpacing="2"
-                    className="select-none transition-colors"
+                    className={`stage-label-text ${isActive ? "active" : ""}`}
                   >
                     {stage.id.toUpperCase()}
                   </text>
+
+                  {/* Stage Node Marker */}
                   <circle
-                    cx="250"
-                    cy="58"
-                    r={isActive ? 4 : 2.5}
+                    cx="300"
+                    cy="62"
+                    r={isActive ? 6 : 3.5}
                     fill={isActive ? "#38bdf8" : "#64748b"}
-                    className="transition-all"
+                    filter={isActive ? "url(#neonGlowFilter)" : undefined}
+                    className="transition-all duration-300"
                   />
                 </g>
               );
             })}
           </svg>
 
-          {/* Center telemetry card */}
+          {/* CENTER FROSTED GLASS CARD (CINEMATIC) */}
           <div
+            ref={centerCardRef}
             aria-live="polite"
-            className="absolute w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] md:w-[270px] md:h-[270px] rounded-full bg-[#0f172a]/90 border border-[rgba(56,189,248,0.3)] backdrop-blur-xl flex flex-col justify-center items-center text-center p-5 shadow-[inset_0_0_20px_rgba(0,0,0,0.5),0_8px_32px_rgba(0,0,0,0.5)] z-10 pointer-events-none"
+            className="glass-card-cinematic absolute w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] md:w-[360px] md:h-[360px] rounded-3xl flex flex-col justify-between items-center text-center p-6 md:p-8 z-20 pointer-events-auto"
           >
-            <MonoLabel className="text-[#38bdf8] mb-1">{activeStage.badge}</MonoLabel>
-            <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mb-1 tracking-tight">
-              {activeStage.title}
-            </h3>
-            <p className="text-[10px] sm:text-[11px] md:text-xs text-[#94a3b8] mb-3 line-clamp-2 leading-relaxed">
-              {activeStage.description}
-            </p>
+            <div ref={cardInnerRef} className="w-full flex flex-col items-center">
+              {/* Dynamic Icon */}
+              <div className="w-14 h-14 rounded-2xl bg-[rgba(56,189,248,0.12)] border border-[rgba(56,189,248,0.3)] flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(56,189,248,0.2)]">
+                <ActiveIcon className="w-7 h-7 text-[#38bdf8]" />
+              </div>
 
-            <div className="w-full grid grid-cols-2 gap-2 pt-2 border-t border-[rgba(255,255,255,0.08)]">
-              {activeStage.metrics.map((m, i) => (
-                <div key={i} className="flex flex-col text-left">
-                  <span className="text-[8px] sm:text-[9px] font-mono text-[#64748b] uppercase">
-                    {m.label}
-                  </span>
-                  <span className="text-[10px] sm:text-xs font-mono font-bold text-[#38bdf8]">
-                    {m.value}
-                  </span>
-                </div>
+              {/* Stage Badge & Title */}
+              <MonoLabel className="text-[#38bdf8] mb-1">
+                {activeStage.badge}
+              </MonoLabel>
+
+              <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight mb-2">
+                {activeStage.title}
+              </h2>
+
+              {/* Description */}
+              <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed mb-4 line-clamp-2">
+                {activeStage.description}
+              </p>
+
+              {/* Live Metric Badges */}
+              <div className="w-full grid grid-cols-2 gap-2 pt-3 border-t border-[rgba(255,255,255,0.08)]">
+                {activeStage.metrics.map((m, i) => (
+                  <div key={i} className="flex flex-col text-left px-2 py-1.5 rounded-lg bg-[#030308]/60 border border-[rgba(255,255,255,0.05)]">
+                    <span className="text-[9px] font-mono text-[#64748b] uppercase truncate">
+                      {m.label}
+                    </span>
+                    <span className="text-xs font-mono font-bold text-[#38bdf8] truncate">
+                      {m.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 8-STAGE PAGINATION DOTS */}
+            <div className="flex items-center justify-center gap-1.5 pt-2">
+              {PIPELINE_STAGES.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i === activeIndex
+                      ? "w-6 bg-[#38bdf8] shadow-[0_0_10px_rgba(56,189,248,0.8)]"
+                      : "w-1.5 bg-[#334155]"
+                  }`}
+                />
               ))}
             </div>
           </div>
         </div>
-
-        {/* Bottom status */}
-        <div className="absolute bottom-4 flex items-center gap-3">
-          <MonoLabel className="text-[#64748b]">SYSTEM STATE: OPERATIONAL</MonoLabel>
-          <StatusDot status="healthy" />
-        </div>
       </div>
-    </section>
+    </div>
   );
 }
