@@ -102,7 +102,7 @@ export function InteractivePipeline() {
 
   // --- HANDLE CLICK TO ACTIVATE ---
   const handleActivate = useCallback(() => {
-    if (isMobileScreen) return; // Skip activation on mobile
+    if (isMobileScreen) return;
     setHasCompletedRotation(false);
     setIsActivated(true);
 
@@ -130,11 +130,11 @@ export function InteractivePipeline() {
         ease: "power2.inOut",
       });
 
-      // Phase 2: Expand wheel upwards to eliminate top gap and position active wedge directly under laser
+      // Phase 2: Expand wheel to balanced size and offset
       gsap.to(wheelRef.current, {
         scale: 1,
         x: 0,
-        y: 260,
+        y: 340,
         duration: 1.3,
         ease: "power3.inOut",
       });
@@ -284,7 +284,7 @@ export function InteractivePipeline() {
       <div className="ambient-orb orb-2" />
       <div className="ambient-orb orb-3" />
 
-      {/* Main Interactive View (Desktop & Pinned Wheel / Mobile Clean Viewer) */}
+      {/* Main View */}
       <div
         ref={stickyRef}
         className="relative min-h-screen w-full flex items-center justify-center overflow-hidden py-16 md:py-0"
@@ -336,7 +336,7 @@ export function InteractivePipeline() {
             </a>
           </div>
 
-          {/* ═══ MOBILE CLEAN STAGE STACK (No circle animation on mobile) ═══ */}
+          {/* MOBILE STAGE STACK */}
           {isMobileScreen && (
             <div className="mt-8 border-t border-[rgba(255,255,255,0.1)] pt-6 flex flex-col gap-3">
               <MonoLabel className="text-[#38bdf8] mb-1">
@@ -401,7 +401,7 @@ export function InteractivePipeline() {
         {!isMobileScreen && (
           <div
             ref={centerTextRef}
-            className="absolute top-[52%] md:top-[54%] z-30 text-center flex flex-col items-center max-w-xl pointer-events-none px-6 -translate-y-1/2"
+            className="absolute top-[50%] md:top-[52%] z-30 text-center flex flex-col items-center max-w-xl pointer-events-none px-6 -translate-y-1/2"
           >
             <div ref={textInnerRef} className="flex flex-col items-center">
               {/* Dynamic Stage Icon */}
@@ -458,16 +458,16 @@ export function InteractivePipeline() {
           </div>
         )}
 
-        {/* ═══ DESKTOP ONLY: GIANT WHEEL ═══ */}
+        {/* ═══ DESKTOP ONLY: PROPORTIONED MECHANICAL WHEEL ═══ */}
         {!isMobileScreen && (
           <div
             ref={wheelRef}
             onClick={handleActivate}
-            className="absolute left-1/2 top-1/2 w-[1100px] h-[1100px] sm:w-[1300px] sm:h-[1300px] md:w-[1450px] md:h-[1450px] z-10 cursor-pointer"
+            className="absolute left-1/2 top-1/2 w-[1080px] h-[1080px] md:w-[1080px] md:h-[1080px] z-10 cursor-pointer"
             style={{ transformOrigin: "center center" }}
           >
             {/* Outer glow ring */}
-            <div className="absolute inset-0 rounded-full border-2 border-[rgba(56,189,248,0.25)] shadow-[0_0_120px_rgba(56,189,248,0.15),inset_0_0_80px_rgba(56,189,248,0.08)] pointer-events-none" />
+            <div className="absolute inset-0 rounded-full border-2 border-[rgba(56,189,248,0.25)] shadow-[0_0_100px_rgba(56,189,248,0.15),inset_0_0_60px_rgba(56,189,248,0.08)] pointer-events-none" />
 
             {/* Rotating SVG Lifecycle Dial */}
             <svg
@@ -549,20 +549,20 @@ export function InteractivePipeline() {
                       className="transition-all duration-300"
                     />
 
-                    {/* Bold Stage Label */}
+                    {/* Bold & Prominent Stage Label */}
                     <text
                       x="700"
-                      y="240"
+                      y="235"
                       textAnchor="middle"
                       fill={isActive ? "#ffffff" : color.text}
                       fontFamily="var(--font-mono)"
                       fontWeight="900"
-                      fontSize={isActive ? "28" : "24"}
-                      letterSpacing="4"
+                      fontSize={isActive ? "34" : "26"}
+                      letterSpacing="5"
                       className="select-none uppercase"
                       style={{
                         textShadow: isActive
-                          ? "0 2px 20px rgba(0,0,0,0.9)"
+                          ? "0 2px 25px rgba(0,0,0,0.95)"
                           : "0 2px 10px rgba(0,0,0,0.8)",
                       }}
                     >
@@ -573,7 +573,7 @@ export function InteractivePipeline() {
                     <circle
                       cx="700"
                       cy="280"
-                      r={isActive ? 8 : 4.5}
+                      r={isActive ? 9 : 5}
                       fill={isActive ? "#ffffff" : color.text}
                       fillOpacity={isActive ? 1 : 0.5}
                       className="transition-all duration-300"
