@@ -15,8 +15,8 @@
   --color-telemetry-danger: #ef4444;
 
   /* Typography */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, "Cascadia Code", monospace;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Code", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 /* --- Base Styles --- */
@@ -37,7 +37,7 @@ body {
 
 /* Ensure anchor links are offset cleanly below the fixed header */
 [id] {
-  scroll-margin-top: 6rem;
+  scroll-margin-top: 6.5rem;
 }
 
 ::selection {
@@ -47,7 +47,8 @@ body {
 
 /* --- Custom Scrollbar --- */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
@@ -56,7 +57,8 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: #1e293b;
-  border-radius: 4px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -69,10 +71,12 @@ body {
   position: absolute;
   border-radius: 50%;
   filter: blur(120px);
-  opacity: 0.4;
+  opacity: 0.38;
   pointer-events: none;
   z-index: 0;
-  animation: floatOrb 14s infinite alternate ease-in-out;
+  transform: translateZ(0);
+  will-change: transform;
+  animation: floatOrb 16s infinite alternate ease-in-out;
 }
 
 .orb-1 {
@@ -89,17 +93,17 @@ body {
   background: radial-gradient(circle, rgba(129, 140, 248, 0.85), rgba(139, 92, 246, 0.25));
   bottom: 10%;
   right: 10%;
-  animation-delay: -7s;
+  animation-delay: -8s;
 }
 
 .orb-3 {
   width: 380px;
   height: 380px;
-  background: radial-gradient(circle, rgba(34, 197, 94, 0.5), transparent);
-  top: 40%;
-  left: 45%;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.45), transparent);
+  top: 45%;
+  left: 48%;
   transform: translate(-50%, -50%);
-  animation-delay: -3.5s;
+  animation-delay: -4s;
 }
 
 @keyframes floatOrb {
@@ -107,11 +111,27 @@ body {
     transform: translate(0, 0) scale(1);
   }
   50% {
-    transform: translate(50px, -40px) scale(1.1);
+    transform: translate(45px, -35px) scale(1.08);
   }
   100% {
-    transform: translate(-40px, 50px) scale(0.92);
+    transform: translate(-35px, 45px) scale(0.94);
   }
+}
+
+/* --- CONTINUOUS DIAL ROTATION (small preview circle) --- */
+
+@keyframes dialRotateCcw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.dial-rotate-ccw {
+  animation: dialRotateCcw 64s linear infinite;
+  transform-origin: center center;
 }
 
 /* --- ULTRA GLASSMORPHISM --- */
@@ -119,11 +139,11 @@ body {
 .glass-panel {
   background: linear-gradient(
     135deg,
-    rgba(15, 23, 42, 0.8) 0%,
-    rgba(15, 23, 42, 0.35) 100%
+    rgba(15, 23, 42, 0.85) 0%,
+    rgba(15, 23, 42, 0.45) 100%
   );
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   border-left: 1px solid rgba(255, 255, 255, 0.12);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
@@ -153,6 +173,71 @@ body {
   background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 50%, #818cf8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+/* --- PIPELINE ACTIVATION SURFACE --- */
+
+.pipeline-explore-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25) inset,
+    0 12px 30px rgba(14, 116, 144, 0.42),
+    0 0 32px rgba(56, 189, 248, 0.42);
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 220ms ease,
+    filter 220ms ease;
+}
+
+.pipeline-explore-button::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -45% auto -45% -38%;
+  width: 38%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.82), transparent);
+  transform: skewX(-22deg) translateX(-180%);
+  transition: transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pipeline-explore-button:hover {
+  transform: translateY(-2px) scale(1.03);
+  filter: saturate(1.1) brightness(1.05);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.44) inset,
+    0 18px 42px rgba(14, 116, 144, 0.5),
+    0 0 46px rgba(56, 189, 248, 0.64);
+}
+
+.pipeline-explore-button:hover::before {
+  transform: skewX(-22deg) translateX(640%);
+}
+
+/* --- PIPELINE EXPLORER RESPONSIVE GEOMETRY --- */
+
+.pipeline-explorer-scene {
+  /* On desktop, the wheel is framed as a half-circle dome: its centre sits below the viewport. */
+  --pipeline-wheel-size: clamp(1280px, 200vmin, 3200px);
+}
+
+.pipeline-explorer-wheel {
+  width: var(--pipeline-wheel-size);
+  height: var(--pipeline-wheel-size);
+}
+
+/* Keep the center card within the SVG's inner clearance zone at every viewport. */
+.pipeline-explorer-card {
+  width: min(calc(100vw - 2rem), calc(var(--pipeline-wheel-size) * 0.56));
+  max-width: 480px;
+}
+
+@media (max-width: 639px) {
+  .pipeline-explorer-scene {
+    --pipeline-wheel-size: clamp(560px, 178vmin, 680px);
+  }
+
+  .pipeline-explorer-card {
+    width: min(calc(100vw - 2rem), calc(var(--pipeline-wheel-size) * 0.6));
+  }
 }
 
 /* --- REDUCED MOTION OVERRIDES --- */

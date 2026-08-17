@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useRef, useState, useCallback, useEffect } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import React, { useEffect, useId, useState } from "react";
 import { PIPELINE_STAGES } from "@/data/pipelineStages";
 import { MonoLabel } from "./atoms/MonoLabel";
-import { StatusDot } from "./atoms/StatusDot";
 import { GlowBadge } from "./atoms/GlowBadge";
 import { SITE_CONTENT } from "@/data/siteContent";
+import { PipelineExplorer } from "./PipelineExplorer";
 import {
   ClipboardList,
   Code2,
@@ -17,14 +15,11 @@ import {
   CloudUpload,
   Settings,
   BarChart3,
-  ChevronDown,
   MousePointerClick,
   Layers,
+  Sparkles,
+  ArrowDown,
 } from "lucide-react";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
 
 const STAGE_ICONS = [
   ClipboardList,
@@ -38,553 +33,363 @@ const STAGE_ICONS = [
 ];
 
 const WEDGE_COLORS = [
-  { main: "#0284c7", glow: "rgba(2, 132, 199, 0.4)", text: "#7dd3fc" },
-  { main: "#2563eb", glow: "rgba(37, 99, 235, 0.4)", text: "#93c5fd" },
-  { main: "#4f46e5", glow: "rgba(79, 70, 229, 0.4)", text: "#a5b4fc" },
-  { main: "#7c3aed", glow: "rgba(124, 58, 237, 0.4)", text: "#c4b5fd" },
-  { main: "#db2777", glow: "rgba(219, 39, 119, 0.4)", text: "#fbcfe8" },
-  { main: "#059669", glow: "rgba(5, 150, 105, 0.4)", text: "#6ee7b7" },
-  { main: "#d97706", glow: "rgba(217, 119, 6, 0.4)", text: "#fde68a" },
-  { main: "#0891b2", glow: "rgba(8, 145, 178, 0.4)", text: "#67e8f9" },
+  { main: "#0284c7", glow: "rgba(2, 132, 199, 0.45)", text: "#7dd3fc" },
+  { main: "#2563eb", glow: "rgba(37, 99, 235, 0.45)", text: "#93c5fd" },
+  { main: "#4f46e5", glow: "rgba(79, 70, 229, 0.45)", text: "#a5b4fc" },
+  { main: "#7c3aed", glow: "rgba(124, 58, 237, 0.45)", text: "#c4b5fd" },
+  { main: "#db2777", glow: "rgba(219, 39, 119, 0.45)", text: "#fbcfe8" },
+  { main: "#059669", glow: "rgba(5, 150, 105, 0.45)", text: "#6ee7b7" },
+  { main: "#d97706", glow: "rgba(217, 119, 6, 0.45)", text: "#fde68a" },
+  { main: "#0891b2", glow: "rgba(8, 145, 178, 0.45)", text: "#67e8f9" },
 ];
 
-const WEDGE_PATH =
-  "M 485.7 182.6 A 560 560 0 0 1 914.3 182.6 L 853.1 330.5 A 400 400 0 0 0 546.9 330.5 Z";
+// Inner radius 320, outer radius 560 with exact 45-degree wedge bounds
+const PREVIEW_WEDGE_PATH =
+  "M 485.7 182.6 A 560 560 0 0 1 914.3 182.6 L 822.5 404.4 A 320 320 0 0 0 577.5 404.4 Z";
 
-export function InteractivePipeline() {
-  const [isActivated, setIsActivated] = useState(false);
-  const [hasCompletedRotation, setHasCompletedRotation] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isMobileScreen, setIsMobileScreen] = useState(false);
+interface PipelineDialProps {
+  activeIndex: number;
+  className?: string;
+  compact?: boolean;
+  onActivate?: () => void;
+}
 
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const stickyRef = useRef<HTMLDivElement>(null);
-  const heroContentRef = useRef<HTMLDivElement>(null);
-  const wheelRef = useRef<HTMLDivElement>(null);
-  const wheelSvgRef = useRef<SVGSVGElement>(null);
-  const centerTextRef = useRef<HTMLDivElement>(null);
-  const textInnerRef = useRef<HTMLDivElement>(null);
-  const telemetryBarRef = useRef<HTMLDivElement>(null);
-  const laserRef = useRef<HTMLDivElement>(null);
-  const originalOverflowRef = useRef<string>("");
-
-  // Detect mobile screen width
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const checkMobile = () => {
-      setIsMobileScreen(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  // --- INITIAL POSITIONING (desktop only) ---
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.innerWidth < 768) return;
-
-    const ctx = gsap.context(() => {
-      gsap.set(wheelRef.current, {
-        xPercent: -50,
-        yPercent: -50,
-        scale: 0.3,
-        x: 280,
-        y: 0,
-      });
-      gsap.set(centerTextRef.current, { opacity: 0, y: 30 });
-      gsap.set(telemetryBarRef.current, { opacity: 0, y: -20 });
-      gsap.set(laserRef.current, { opacity: 0 });
-    }, wrapperRef);
-
-    return () => ctx.revert();
-  }, [isMobileScreen]);
-
-  // --- HANDLE CLICK TO ACTIVATE ---
-  const handleActivate = useCallback(() => {
-    if (isMobileScreen) return;
-    setHasCompletedRotation(false);
-    setIsActivated(true);
-
-    if (wrapperRef.current) {
-      wrapperRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [isMobileScreen]);
-
-  // --- ACTIVATION EFFECT: Expand wheel + create ScrollTrigger (desktop only) ---
-  useEffect(() => {
-    if (isMobileScreen || !isActivated || hasCompletedRotation) return;
-    if (typeof window === "undefined") return;
-
-    originalOverflowRef.current = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    let activationTimer: NodeJS.Timeout;
-
-    const ctx = gsap.context(() => {
-      // Phase 1: Fade out hero text
-      gsap.to(heroContentRef.current, {
-        opacity: 0,
-        x: -120,
-        duration: 0.8,
-        ease: "power2.inOut",
-      });
-
-      // Phase 2: Expand wheel to balanced size and offset
-      gsap.to(wheelRef.current, {
-        scale: 1,
-        x: 0,
-        y: 340,
-        duration: 1.3,
-        ease: "power3.inOut",
-      });
-
-      // Phase 3: Fade in telemetry bar + laser + center text
-      gsap.to(telemetryBarRef.current, {
-        opacity: 1,
-        y: 0,
-        duration: 0.5,
-        delay: 0.8,
-        ease: "power2.out",
-      });
-
-      gsap.to(laserRef.current, {
-        opacity: 1,
-        duration: 0.4,
-        delay: 1.0,
-      });
-
-      gsap.to(centerTextRef.current, {
-        opacity: 1,
-        y: 0,
-        duration: 0.6,
-        delay: 1.1,
-        ease: "power2.out",
-      });
-
-      // Phase 4: Create ScrollTrigger after expansion completes
-      activationTimer = setTimeout(() => {
-        document.body.style.overflow = originalOverflowRef.current;
-
-        const totalStages = PIPELINE_STAGES.length;
-
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: wrapperRef.current,
-            start: "top top",
-            end: "+=4800",
-            pin: stickyRef.current,
-            scrub: 0.8,
-            once: true,
-            onLeave: () => {
-              setHasCompletedRotation(true);
-              setIsActivated(false);
-            },
-            snap: {
-              snapTo: 1 / (totalStages + 1),
-              duration: { min: 0.2, max: 0.45 },
-              delay: 0.08,
-              ease: "power2.inOut",
-            },
-          },
-        });
-
-        tl.to(
-          wheelSvgRef.current,
-          {
-            rotate: -(totalStages - 1) * 45,
-            duration: 4,
-            ease: "none",
-            onUpdate: function () {
-              const progress = this.progress();
-              const rawIdx = Math.round(progress * (totalStages - 1));
-              const idx = Math.min(Math.max(rawIdx, 0), totalStages - 1);
-
-              setActiveIndex((prev) => {
-                if (prev !== idx && textInnerRef.current) {
-                  gsap.fromTo(
-                    textInnerRef.current,
-                    { opacity: 0.15, y: -10, scale: 0.97 },
-                    {
-                      opacity: 1,
-                      y: 0,
-                      scale: 1,
-                      duration: 0.3,
-                      ease: "power2.out",
-                    }
-                  );
-                  return idx;
-                }
-                return prev;
-              });
-            },
-          },
-          0
-        );
-
-        tl.to(
-          centerTextRef.current,
-          { opacity: 0, y: -20, duration: 0.5, ease: "power2.in" },
-          4.3
-        );
-
-        tl.to(
-          telemetryBarRef.current,
-          { opacity: 0, y: -20, duration: 0.4, ease: "power2.in" },
-          4.3
-        );
-
-        tl.to(
-          laserRef.current,
-          { opacity: 0, duration: 0.3, ease: "power2.in" },
-          4.3
-        );
-
-        tl.to(
-          wheelRef.current,
-          {
-            scale: 0.3,
-            x: 280,
-            y: 0,
-            duration: 1,
-            ease: "power3.inOut",
-          },
-          4.5
-        );
-
-        tl.to(
-          heroContentRef.current,
-          { opacity: 1, x: 0, duration: 0.6, ease: "power2.out" },
-          5.0
-        );
-
-        ScrollTrigger.refresh();
-      }, 1500);
-    }, wrapperRef);
-
-    return () => {
-      clearTimeout(activationTimer);
-      document.body.style.overflow = originalOverflowRef.current;
-      ctx.revert();
-    };
-  }, [isActivated, hasCompletedRotation, isMobileScreen]);
-
+function PipelineDial({
+  activeIndex,
+  className = "",
+  compact = false,
+  onActivate,
+}: PipelineDialProps) {
+  const rawId = useId().replace(/:/g, "");
+  const gradientId = `preview-dial-glow-${rawId}`;
+  const filterId = `preview-wedge-glow-${rawId}`;
   const activeStage = PIPELINE_STAGES[activeIndex];
-  const ActiveIcon = STAGE_ICONS[activeIndex] || ClipboardList;
+  const ActiveStageIcon = STAGE_ICONS[activeIndex] || ClipboardList;
   const activeColor = WEDGE_COLORS[activeIndex] || WEDGE_COLORS[0];
+  const isInteractive = Boolean(onActivate);
 
   return (
-    <section
-      id="pipeline"
-      ref={wrapperRef}
-      className="relative w-full bg-[#030712] text-white"
+    <div
+      onClick={onActivate}
+      className={`relative rounded-full group select-none ${
+        isInteractive
+          ? "cursor-pointer transition-transform duration-500 hover:scale-[1.035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:ring-offset-4 focus-visible:ring-offset-[#030712]"
+          : "pointer-events-none"
+      } ${className}`}
+      role={isInteractive ? "button" : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      aria-label={
+        isInteractive
+          ? "Click to explore the DevOps pipeline lifecycle"
+          : undefined
+      }
+      aria-hidden={isInteractive ? undefined : true}
+      onKeyDown={(event) => {
+        if (!onActivate || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        onActivate();
+      }}
     >
-      {/* Ambient Orbs */}
-      <div className="ambient-orb orb-1" />
-      <div className="ambient-orb orb-2" />
-      <div className="ambient-orb orb-3" />
-
-      {/* Main View */}
+      {/* Outer halo glow ring */}
       <div
-        ref={stickyRef}
-        className="relative min-h-screen w-full flex items-center justify-center overflow-hidden py-16 md:py-0"
+        className="absolute inset-0 rounded-full border border-[rgba(56,189,248,0.25)] pointer-events-none transition-all duration-700 group-hover:border-[rgba(56,189,248,0.5)]"
+        style={{
+          boxShadow: `0 0 70px ${activeColor.glow}, inset 0 0 40px rgba(56,189,248,0.08)`,
+        }}
+      />
+
+      {/* Existing continuous lifecycle dial, scaled rather than replaced at smaller breakpoints. */}
+      <svg
+        viewBox="0 0 1400 1400"
+        className="w-full h-full transform-gpu will-change-transform dial-rotate-ccw"
+        textRendering="geometricPrecision"
+        shapeRendering="geometricPrecision"
+        role="img"
+        aria-label="DevOps continuous lifecycle wheel"
       >
-        {/* Background Grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
-
-        {/* ═══ HERO CONTENT ═══ */}
-        <div
-          ref={heroContentRef}
-          className="relative md:absolute left-6 md:left-16 lg:left-24 max-w-xl z-20 px-4 md:px-0"
-        >
-          <GlowBadge className="mb-6">{SITE_CONTENT.hero.badge}</GlowBadge>
-
-          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.02] text-white">
-            {SITE_CONTENT.hero.headline}{" "}
-            <span className="gradient-accent block">
-              {SITE_CONTENT.hero.headlineAccent}
-            </span>
-          </h1>
-
-          <p className="text-[#94a3b8] text-sm sm:text-base leading-relaxed mb-8 max-w-lg">
-            {SITE_CONTENT.hero.description}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-4 mb-10 md:mb-0">
-            {!isMobileScreen ? (
-              <button
-                onClick={handleActivate}
-                className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase hover:scale-105 transition-all shadow-[0_0_30px_rgba(56,189,248,0.5)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:outline-none"
-              >
-                <MousePointerClick className="w-4 h-4 animate-bounce" />
-                EXPLORE PIPELINES
-              </button>
-            ) : (
-              <a
-                href="#services"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0f172a] border border-[#38bdf8]/40 text-[#38bdf8] font-mono font-bold text-xs tracking-wider uppercase"
-              >
-                <Layers className="w-4 h-4" />
-                VIEW CAPABILITIES ↓
-              </a>
-            )}
-            <a
-              href="#services"
-              className="text-xs font-mono text-[#64748b] hover:text-[#94a3b8] transition-colors underline underline-offset-4"
-            >
-              or scroll to services ↓
-            </a>
-          </div>
-
-          {/* MOBILE STAGE STACK */}
-          {isMobileScreen && (
-            <div className="mt-8 border-t border-[rgba(255,255,255,0.1)] pt-6 flex flex-col gap-3">
-              <MonoLabel className="text-[#38bdf8] mb-1">
-                DEVOPS LIFECYCLE STAGES
-              </MonoLabel>
-              <div className="grid grid-cols-2 gap-2">
-                {PIPELINE_STAGES.map((s, idx) => {
-                  const Icon = STAGE_ICONS[idx] || ClipboardList;
-                  const c = WEDGE_COLORS[idx];
-                  return (
-                    <div
-                      key={s.id}
-                      className="p-3 rounded-xl bg-[#0f172a]/80 border border-[rgba(255,255,255,0.08)] flex items-center gap-2.5"
-                    >
-                      <Icon className="w-4 h-4 flex-shrink-0" style={{ color: c.text }} />
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-[10px] font-mono font-bold text-white truncate">
-                          0{idx + 1} {s.title}
-                        </span>
-                        <span className="text-[9px] font-mono text-[#64748b] truncate">
-                          {s.badge}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ═══ DESKTOP ONLY: TELEMETRY BAR ═══ */}
-        {!isMobileScreen && (
-          <div
-            ref={telemetryBarRef}
-            className="absolute top-16 left-6 right-6 z-30 flex justify-between items-center pointer-events-none"
+        <defs>
+          <linearGradient
+            id={gradientId}
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="100%"
           >
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0f172a]/80 border border-[rgba(255,255,255,0.1)] backdrop-blur-md">
-              <StatusDot status="healthy" pulse size="md" />
-              <MonoLabel className="text-[#38bdf8]">
-                ENGINEERING CONTROL CONSOLE // LIFECYCLE DIAL
-              </MonoLabel>
-            </div>
-            <span className="text-xs font-mono font-bold text-[#38bdf8] bg-[#0f172a]/90 px-4 py-2 rounded-full border border-[rgba(56,189,248,0.3)] shadow-[0_0_15px_rgba(56,189,248,0.2)]">
-              STAGE 0{activeIndex + 1} / 08
-            </span>
-          </div>
-        )}
+            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.85" />
+            <stop offset="50%" stopColor="#60a5fa" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="#818cf8" stopOpacity="0.85" />
+          </linearGradient>
 
-        {/* ═══ DESKTOP ONLY: LASER POINTER ═══ */}
-        {!isMobileScreen && (
-          <div
-            ref={laserRef}
-            className="absolute top-20 z-30 pointer-events-none flex flex-col items-center"
-          >
-            <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[16px] border-t-[#38bdf8] drop-shadow-[0_0_20px_rgba(56,189,248,0.95)]" />
-            <div className="w-px h-6 bg-gradient-to-b from-[#38bdf8] to-transparent animate-pulse" />
-          </div>
-        )}
+          <filter id={filterId} x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="8" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
 
-        {/* ═══ DESKTOP ONLY: FIXED CENTER INFORMATION ═══ */}
-        {!isMobileScreen && (
-          <div
-            ref={centerTextRef}
-            className="absolute top-[50%] md:top-[52%] z-30 text-center flex flex-col items-center max-w-xl pointer-events-none px-6 -translate-y-1/2"
-          >
-            <div ref={textInnerRef} className="flex flex-col items-center">
-              {/* Dynamic Stage Icon */}
-              <div
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#0f172a]/90 border flex items-center justify-center mb-2.5 backdrop-blur-xl transition-all duration-300"
+        {/* Outer rim */}
+        <circle
+          cx="700"
+          cy="700"
+          r="660"
+          fill="none"
+          stroke={`url(#${gradientId})`}
+          strokeWidth="2.5"
+        />
+
+        {/* Inner guide dashed circle */}
+        <circle
+          cx="700"
+          cy="700"
+          r="320"
+          fill="none"
+          stroke="rgba(255,255,255,0.1)"
+          strokeWidth="1.5"
+          strokeDasharray="6 6"
+        />
+
+        {/* 8 Rotating wedges */}
+        {PIPELINE_STAGES.map((stage, idx) => {
+          const angle = idx * 45;
+          const color = WEDGE_COLORS[idx];
+          const isHighlighted = idx === activeIndex;
+
+          return (
+            <g key={stage.id} transform={`rotate(${angle}, 700, 700)`}>
+              <path
+                d={PREVIEW_WEDGE_PATH}
+                fill={isHighlighted ? color.main : "rgba(15, 23, 42, 0.75)"}
+                fillOpacity={isHighlighted ? 0.95 : 0.45}
+                stroke={isHighlighted ? "#ffffff" : "rgba(255, 255, 255, 0.12)"}
+                strokeWidth={isHighlighted ? "3.5" : "1.2"}
+                filter={isHighlighted ? `url(#${filterId})` : undefined}
                 style={{
-                  boxShadow: `0 0 25px ${activeColor.glow}, inset 0 0 12px ${activeColor.glow}`,
-                  borderColor: activeColor.main,
+                  transition:
+                    "fill 0.6s ease, fill-opacity 0.6s ease, stroke 0.6s ease",
+                }}
+              />
+
+              <text
+                x="700"
+                y="275"
+                textAnchor="middle"
+                fill={isHighlighted ? "#ffffff" : color.text}
+                fontFamily="var(--font-mono)"
+                fontWeight="900"
+                fontSize={compact ? (isHighlighted ? "64" : "54") : isHighlighted ? "46" : "38"}
+                letterSpacing={compact ? "2" : "3"}
+                className="select-none uppercase"
+                style={{
+                  transition: "fill 0.6s ease, font-size 0.6s ease",
+                  textShadow: isHighlighted
+                    ? "0 0 20px rgba(255,255,255,0.8), 0 2px 10px rgba(0,0,0,0.9)"
+                    : "0 2px 10px rgba(0,0,0,0.8)",
                 }}
               >
-                <ActiveIcon
-                  className="w-6 h-6 sm:w-7 sm:h-7 transition-colors"
-                  style={{ color: activeColor.text }}
-                />
-              </div>
+                {stage.id.toUpperCase()}
+              </text>
 
-              <MonoLabel
-                className="mb-1 tracking-widest text-[10px] sm:text-[11px] font-bold"
-                style={{ color: activeColor.text }}
-              >
-                {activeStage.badge}
-              </MonoLabel>
+              <circle
+                cx="700"
+                cy="325"
+                r={isHighlighted ? 7 : 4}
+                fill={isHighlighted ? "#ffffff" : color.text}
+                fillOpacity={isHighlighted ? 1 : 0.4}
+                style={{ transition: "r 0.6s ease, fill-opacity 0.6s ease" }}
+              />
+            </g>
+          );
+        })}
+      </svg>
 
-              <h2 className="text-xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight mb-2 drop-shadow-[0_0_35px_rgba(255,255,255,0.3)]">
-                {activeStage.title}
-              </h2>
-
-              <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed mb-3.5 max-w-md">
-                {activeStage.description}
-              </p>
-
-              {/* Telemetry Metrics */}
-              <div className="flex items-center justify-center gap-6 sm:gap-10 border-t border-[rgba(255,255,255,0.12)] pt-3 w-full max-w-sm">
-                {activeStage.metrics.map((m, i) => (
-                  <div key={i} className="flex flex-col items-center">
-                    <span className="text-[9px] font-mono text-[#64748b] uppercase tracking-wider mb-0.5">
-                      {m.label}
-                    </span>
-                    <span
-                      className="text-xs sm:text-sm font-mono font-extrabold"
-                      style={{ color: activeColor.text }}
-                    >
-                      {m.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 mt-3 text-[10px] font-mono text-[#64748b] animate-bounce">
-              <span>SCROLL DOWN TO ROTATE MECHANICAL DIAL</span>
-              <ChevronDown className="w-3.5 h-3.5 text-[#38bdf8]" />
-            </div>
-          </div>
-        )}
-
-        {/* ═══ DESKTOP ONLY: PROPORTIONED MECHANICAL WHEEL ═══ */}
-        {!isMobileScreen && (
+      {/* Center status core remains upright while the dial rotates around it */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div
+          className={`flex flex-col items-center text-center rounded-full bg-[#0f172a]/85 backdrop-blur-xl border transition-all duration-500 shadow-2xl ${
+            compact ? "p-3" : "p-4 sm:p-5"
+          }`}
+          style={{
+            borderColor: `${activeColor.main}60`,
+            boxShadow: `0 0 30px ${activeColor.glow}, inset 0 0 20px rgba(0,0,0,0.6)`,
+          }}
+        >
           <div
-            ref={wheelRef}
-            onClick={handleActivate}
-            className="absolute left-1/2 top-1/2 w-[1080px] h-[1080px] md:w-[1080px] md:h-[1080px] z-10 cursor-pointer"
-            style={{ transformOrigin: "center center" }}
+            className={`rounded-xl flex items-center justify-center transition-all duration-500 ${
+              compact ? "w-8 h-8 mb-1" : "w-10 h-10 mb-1.5"
+            }`}
+            style={{
+              backgroundColor: `${activeColor.main}25`,
+              boxShadow: `0 0 16px ${activeColor.glow}`,
+            }}
           >
-            {/* Outer glow ring */}
-            <div className="absolute inset-0 rounded-full border-2 border-[rgba(56,189,248,0.25)] shadow-[0_0_100px_rgba(56,189,248,0.15),inset_0_0_60px_rgba(56,189,248,0.08)] pointer-events-none" />
-
-            {/* Rotating SVG Lifecycle Dial */}
-            <svg
-              ref={wheelSvgRef}
-              viewBox="0 0 1400 1400"
-              className="w-full h-full transform-gpu will-change-transform"
-              textRendering="geometricPrecision"
-              shapeRendering="geometricPrecision"
-              role="img"
-              aria-label="DevOps mechanical lifecycle rotary dial with 8 stages"
-            >
-              <defs>
-                <linearGradient
-                  id="dialGlow"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="100%"
-                >
-                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.9" />
-                  <stop offset="50%" stopColor="#60a5fa" stopOpacity="0.5" />
-                  <stop offset="100%" stopColor="#818cf8" stopOpacity="0.9" />
-                </linearGradient>
-
-                <filter
-                  id="wedgeShadow"
-                  x="-20%"
-                  y="-20%"
-                  width="140%"
-                  height="140%"
-                >
-                  <feGaussianBlur stdDeviation="6" result="blur" />
-                  <feComposite
-                    in="SourceGraphic"
-                    in2="blur"
-                    operator="over"
-                  />
-                </filter>
-              </defs>
-
-              {/* Outer bezel ring */}
-              <circle
-                cx="700"
-                cy="700"
-                r="660"
-                fill="none"
-                stroke="url(#dialGlow)"
-                strokeWidth="3"
-              />
-              {/* Inner dashed guide ring */}
-              <circle
-                cx="700"
-                cy="700"
-                r="380"
-                fill="none"
-                stroke="rgba(255, 255, 255, 0.12)"
-                strokeWidth="2"
-                strokeDasharray="8 8"
-              />
-
-              {/* 8 SEGMENTED CHEVRON WEDGES */}
-              {PIPELINE_STAGES.map((stage, idx) => {
-                const angle = idx * 45;
-                const isActive = idx === activeIndex;
-                const color = WEDGE_COLORS[idx];
-
-                return (
-                  <g key={stage.id} transform={`rotate(${angle}, 700, 700)`}>
-                    {/* Colored Wedge */}
-                    <path
-                      d={WEDGE_PATH}
-                      fill={isActive ? color.main : "rgba(15, 23, 42, 0.85)"}
-                      fillOpacity={isActive ? 0.95 : 0.65}
-                      stroke={
-                        isActive ? "#ffffff" : "rgba(255, 255, 255, 0.12)"
-                      }
-                      strokeWidth={isActive ? "3.5" : "1.5"}
-                      filter={isActive ? "url(#wedgeShadow)" : undefined}
-                      className="transition-all duration-300"
-                    />
-
-                    {/* Bold & Prominent Stage Label */}
-                    <text
-                      x="700"
-                      y="235"
-                      textAnchor="middle"
-                      fill={isActive ? "#ffffff" : color.text}
-                      fontFamily="var(--font-mono)"
-                      fontWeight="900"
-                      fontSize={isActive ? "34" : "26"}
-                      letterSpacing="5"
-                      className="select-none uppercase"
-                      style={{
-                        textShadow: isActive
-                          ? "0 2px 25px rgba(0,0,0,0.95)"
-                          : "0 2px 10px rgba(0,0,0,0.8)",
-                      }}
-                    >
-                      {stage.id.toUpperCase()}
-                    </text>
-
-                    {/* Stage Marker Dot */}
-                    <circle
-                      cx="700"
-                      cy="280"
-                      r={isActive ? 9 : 5}
-                      fill={isActive ? "#ffffff" : color.text}
-                      fillOpacity={isActive ? 1 : 0.5}
-                      className="transition-all duration-300"
-                    />
-                  </g>
-                );
-              })}
-            </svg>
+            <ActiveStageIcon
+              className={compact ? "w-4 h-4" : "w-5 h-5"}
+              style={{ color: activeColor.text }}
+            />
           </div>
-        )}
+          <span
+            className={`font-mono font-bold tracking-wider uppercase transition-colors duration-500 ${
+              compact ? "text-[8.5px]" : "text-[11px]"
+            }`}
+            style={{ color: activeColor.text }}
+          >
+            {`0${activeIndex + 1} // ${activeStage.id.toUpperCase()}`}
+          </span>
+          {!compact && (
+            <span className="text-[9px] font-mono text-[#64748b] tracking-wider uppercase flex items-center gap-1 mt-0.5">
+              <Sparkles className="w-2.5 h-2.5 text-[#38bdf8] animate-pulse" />
+              CLICK TO EXPLORE
+            </span>
+          )}
+        </div>
       </div>
-    </section>
+    </div>
+  );
+}
+
+export function InteractivePipeline() {
+  const [isExplorerOpen, setIsExplorerOpen] = useState(false);
+  const [activePreviewIndex, setActivePreviewIndex] = useState(0);
+
+  // Smooth rotation timer that highlights the stage rotating to the top
+  useEffect(() => {
+    // 64 seconds total rotation divided across 8 stages = 8s per stage
+    const interval = setInterval(() => {
+      setActivePreviewIndex((prev) => (prev + 1) % PIPELINE_STAGES.length);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <>
+      <section
+        id="pipeline"
+        className="relative w-full overflow-x-clip bg-[#030712] text-white"
+      >
+        {/* Ambient Glow Orbs */}
+        <div className="ambient-orb orb-1" />
+        <div className="ambient-orb orb-2" />
+        <div className="ambient-orb orb-3" />
+
+        {/* Hero Section Container */}
+        <div className="relative min-h-[90vh] lg:min-h-screen w-full flex flex-col justify-center overflow-hidden pt-28 pb-16 lg:py-0">
+          {/* Subtle Background Grid */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
+
+          {/* ═══ HERO CONTENT ═══ */}
+          <div className="relative z-20 w-full max-w-2xl px-6 sm:px-10 lg:absolute lg:left-12 lg:px-0 xl:left-20">
+            <GlowBadge className="mb-6">
+              {SITE_CONTENT.hero.badge}
+            </GlowBadge>
+
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight mb-6 leading-[1.05] text-white">
+              {SITE_CONTENT.hero.headline}{" "}
+              <span className="gradient-accent block">
+                {SITE_CONTENT.hero.headlineAccent}
+              </span>
+            </h1>
+
+            <p className="text-[#94a3b8] text-sm sm:text-base leading-relaxed mb-8 max-w-xl">
+              {SITE_CONTENT.hero.description}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4 mb-8 lg:mb-0">
+              <button
+                onClick={() => setIsExplorerOpen(true)}
+                className="hidden md:inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase hover:scale-[1.03] active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(56,189,248,0.5)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:outline-none group"
+              >
+                <MousePointerClick className="w-4 h-4 animate-bounce group-hover:scale-110" />
+                EXPLORE PIPELINES
+              </button>
+
+              <button
+                onClick={() => setIsExplorerOpen(true)}
+                className="inline-flex md:hidden items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase hover:scale-[1.03] active:scale-[0.98] transition-all shadow-[0_0_24px_rgba(56,189,248,0.35)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:outline-none"
+              >
+                <MousePointerClick className="w-4 h-4" />
+                EXPLORE LIFECYCLE
+              </button>
+
+              <a
+                href="#services"
+                className="inline-flex md:hidden items-center gap-2 px-5 py-3 rounded-xl bg-[#0f172a] border border-[#38bdf8]/40 text-[#38bdf8] font-mono font-bold text-xs tracking-wider uppercase hover:bg-[#38bdf8]/10 transition-colors"
+              >
+                <Layers className="w-4 h-4" />
+                VIEW CAPABILITIES
+              </a>
+
+              <a
+                href="#services"
+                className="inline-flex items-center gap-1 text-xs font-mono text-[#64748b] hover:text-[#94a3b8] transition-colors underline underline-offset-4"
+              >
+                <span>or scroll to services</span>
+                <ArrowDown className="w-3 h-3" />
+              </a>
+            </div>
+
+            {/* ═══ MOBILE: Synchronized Stage Grid ═══ */}
+            <div className="mt-6 flex flex-col items-center gap-5 md:hidden">
+              <PipelineDial
+                activeIndex={activePreviewIndex}
+                compact
+                className="h-[13rem] w-[13rem]"
+              />
+
+              <div className="w-full border-t border-[rgba(255,255,255,0.1)] pt-5 flex flex-col gap-3">
+                <MonoLabel className="text-[#38bdf8] mb-1">
+                  DEVOPS LIFECYCLE STAGES
+                </MonoLabel>
+                <div className="grid grid-cols-2 gap-2">
+                  {PIPELINE_STAGES.map((s, idx) => {
+                    const Icon = STAGE_ICONS[idx] || ClipboardList;
+                    const c = WEDGE_COLORS[idx];
+                    const isActive = idx === activePreviewIndex;
+
+                    return (
+                      <div
+                        key={s.id}
+                        className={`p-3 rounded-xl border flex items-center gap-2.5 transition-all duration-300 ${
+                          isActive
+                            ? "bg-[#0f172a] border-[#38bdf8]/60 shadow-[0_0_15px_rgba(56,189,248,0.25)]"
+                            : "bg-[#0f172a]/60 border-[rgba(255,255,255,0.08)]"
+                        }`}
+                      >
+                        <Icon
+                          className="w-4 h-4 flex-shrink-0"
+                          style={{ color: isActive ? "#38bdf8" : c.text }}
+                        />
+                        <div className="flex flex-col min-w-0">
+                          <span
+                            className={`text-[10px] font-mono font-bold truncate ${
+                              isActive ? "text-white" : "text-[#cbd5e1]"
+                            }`}
+                          >
+                            0{idx + 1} {s.title}
+                          </span>
+                          <span className="text-[9px] font-mono text-[#64748b] truncate">
+                            {s.badge}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ═══ TABLET & DESKTOP: Interactive Continuous Lifecycle Wheel ═══ */}
+          <PipelineDial
+            activeIndex={activePreviewIndex}
+            onActivate={() => setIsExplorerOpen(true)}
+            className="hidden md:block mt-10 h-[min(52vw,390px)] w-[min(52vw,390px)] self-center z-10 lg:absolute lg:right-6 lg:top-1/2 lg:mt-0 lg:h-[390px] lg:w-[390px] lg:-translate-y-1/2 xl:right-16 xl:h-[460px] xl:w-[460px]"
+          />
+        </div>
+      </section>
+
+      {/* ═══ FULLSCREEN EXPLORER OVERLAY ═══ */}
+      {isExplorerOpen && (
+        <PipelineExplorer onClose={() => setIsExplorerOpen(false)} />
+      )}
+    </>
   );
 }

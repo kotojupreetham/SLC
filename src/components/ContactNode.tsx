@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { MonoLabel } from "./atoms/MonoLabel";
 import { StatusDot } from "./atoms/StatusDot";
 import { validateContactSubmission, ValidationResult } from "@/lib/contactValidation";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Send, Terminal } from "lucide-react";
 
 export function ContactNode() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -15,7 +15,7 @@ export function ContactNode() {
     name: "",
     email: "",
     projectDetails: "",
-    honeypot: "", // hidden field
+    honeypot: "", // hidden field for bot filtering
   });
 
   const [fieldErrors, setFieldErrors] = useState<ValidationResult["errors"]>({});
@@ -63,21 +63,22 @@ export function ContactNode() {
 
   return (
     <section className="py-24 px-6 max-w-4xl mx-auto border-t border-[rgba(255,255,255,0.08)]">
-      <div className="bg-[#0f172a] border border-[rgba(56,189,248,0.3)] rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+      <div className="bg-[#0f172a] border border-[rgba(56,189,248,0.3)] rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden backdrop-blur-xl">
         {/* Terminal chrome header */}
         <div className="flex items-center justify-between pb-4 border-b border-[rgba(255,255,255,0.08)] mb-8">
           <div className="flex items-center gap-3">
             <div className="flex gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-[#ef4444]/80" />
-              <span className="w-3 h-3 rounded-full bg-[#f59e0b]/80" />
-              <span className="w-3 h-3 rounded-full bg-[#22c55e]/80" />
+              <span className="w-3 h-3 rounded-full bg-[#ef4444]/80 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+              <span className="w-3 h-3 rounded-full bg-[#f59e0b]/80 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+              <span className="w-3 h-3 rounded-full bg-[#22c55e]/80 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
             </div>
-            <MonoLabel className="text-[#64748b]">
-              sre-initiate-engagement.sh
-            </MonoLabel>
+            <div className="flex items-center gap-1.5 text-[#64748b]">
+              <Terminal className="w-3.5 h-3.5" />
+              <MonoLabel className="text-[#94a3b8]">sre-initiate-engagement.sh</MonoLabel>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <StatusDot status={submitted ? "healthy" : "accent"} />
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#030712]/60 border border-[rgba(255,255,255,0.08)]">
+            <StatusDot status={submitted ? "healthy" : "accent"} pulse />
             <MonoLabel className={submitted ? "text-[#22c55e]" : "text-[#38bdf8]"}>
               {submitted ? "PAYLOAD DISPATCHED" : "SECURE TRANSMISSION"}
             </MonoLabel>
@@ -103,7 +104,7 @@ export function ContactNode() {
             {serverError && (
               <div
                 role="alert"
-                className="flex items-start gap-3 p-4 rounded-lg bg-[#ef4444]/10 border border-[#ef4444]/40 text-[#fca5a5] text-xs font-mono"
+                className="flex items-start gap-3 p-4 rounded-xl bg-[#ef4444]/10 border border-[#ef4444]/40 text-[#fca5a5] text-xs font-mono"
               >
                 <AlertCircle className="w-4 h-4 text-[#ef4444] shrink-0 mt-0.5" />
                 <div>
@@ -116,7 +117,7 @@ export function ContactNode() {
             <div>
               <label
                 htmlFor="contact-name"
-                className="block text-xs font-mono text-[#94a3b8] uppercase mb-2 tracking-wider"
+                className="block text-xs font-mono text-[#cbd5e1] uppercase mb-2 tracking-wider"
               >
                 Engineer / Organization Name <span className="text-[#38bdf8]">*</span>
               </label>
@@ -131,17 +132,24 @@ export function ContactNode() {
                   if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: undefined });
                 }}
                 placeholder="e.g., Jane Doe, VP of Engineering"
-                className="w-full bg-[#090d16] border border-[rgba(255,255,255,0.08)] rounded-lg p-3 text-sm text-white font-mono placeholder:text-[#334155] focus:outline-none focus:border-[#38bdf8] transition-colors disabled:opacity-50"
+                className={`w-full bg-[#090d16] border rounded-xl p-3.5 text-sm text-white font-mono placeholder:text-[#475569] transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#38bdf8] focus:border-transparent ${
+                  fieldErrors.name
+                    ? "border-[#ef4444] bg-[#ef4444]/5"
+                    : "border-[rgba(255,255,255,0.08)] hover:border-[#334155]"
+                }`}
               />
               {fieldErrors.name && (
-                <p className="mt-1.5 text-xs font-mono text-[#f87171]">{fieldErrors.name}</p>
+                <p className="mt-1.5 text-xs font-mono text-[#f87171] flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {fieldErrors.name}
+                </p>
               )}
             </div>
 
             <div>
               <label
                 htmlFor="contact-email"
-                className="block text-xs font-mono text-[#94a3b8] uppercase mb-2 tracking-wider"
+                className="block text-xs font-mono text-[#cbd5e1] uppercase mb-2 tracking-wider"
               >
                 Work Email Address <span className="text-[#38bdf8]">*</span>
               </label>
@@ -156,17 +164,24 @@ export function ContactNode() {
                   if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: undefined });
                 }}
                 placeholder="jane@company.com"
-                className="w-full bg-[#090d16] border border-[rgba(255,255,255,0.08)] rounded-lg p-3 text-sm text-white font-mono placeholder:text-[#334155] focus:outline-none focus:border-[#38bdf8] transition-colors disabled:opacity-50"
+                className={`w-full bg-[#090d16] border rounded-xl p-3.5 text-sm text-white font-mono placeholder:text-[#475569] transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#38bdf8] focus:border-transparent ${
+                  fieldErrors.email
+                    ? "border-[#ef4444] bg-[#ef4444]/5"
+                    : "border-[rgba(255,255,255,0.08)] hover:border-[#334155]"
+                }`}
               />
               {fieldErrors.email && (
-                <p className="mt-1.5 text-xs font-mono text-[#f87171]">{fieldErrors.email}</p>
+                <p className="mt-1.5 text-xs font-mono text-[#f87171] flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {fieldErrors.email}
+                </p>
               )}
             </div>
 
             <div>
               <label
                 htmlFor="contact-details"
-                className="block text-xs font-mono text-[#94a3b8] uppercase mb-2 tracking-wider"
+                className="block text-xs font-mono text-[#cbd5e1] uppercase mb-2 tracking-wider"
               >
                 System Infrastructure & Objectives <span className="text-[#38bdf8]">*</span>
               </label>
@@ -182,17 +197,24 @@ export function ContactNode() {
                     setFieldErrors({ ...fieldErrors, projectDetails: undefined });
                 }}
                 placeholder="Describe deployment bottlenecks, target uptime goals, or cloud migration parameters..."
-                className="w-full bg-[#090d16] border border-[rgba(255,255,255,0.08)] rounded-lg p-3 text-sm text-white font-mono placeholder:text-[#334155] focus:outline-none focus:border-[#38bdf8] transition-colors resize-none disabled:opacity-50"
+                className={`w-full bg-[#090d16] border rounded-xl p-3.5 text-sm text-white font-mono placeholder:text-[#475569] transition-all resize-none disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#38bdf8] focus:border-transparent ${
+                  fieldErrors.projectDetails
+                    ? "border-[#ef4444] bg-[#ef4444]/5"
+                    : "border-[rgba(255,255,255,0.08)] hover:border-[#334155]"
+                }`}
               />
               {fieldErrors.projectDetails && (
-                <p className="mt-1.5 text-xs font-mono text-[#f87171]">{fieldErrors.projectDetails}</p>
+                <p className="mt-1.5 text-xs font-mono text-[#f87171] flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {fieldErrors.projectDetails}
+                </p>
               )}
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-4 rounded-lg bg-[#38bdf8] text-[#090d16] font-mono font-bold text-sm tracking-wider uppercase hover:bg-[#38bdf8]/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090d16] disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#090d16] font-mono font-bold text-sm tracking-wider uppercase hover:opacity-95 hover:scale-[1.01] active:scale-[0.99] transition-all shadow-[0_0_25px_rgba(56,189,248,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090d16] disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
@@ -200,17 +222,20 @@ export function ContactNode() {
                   <span>TRANSMITTING PAYLOAD...</span>
                 </>
               ) : (
-                <span>EXECUTE PIPELINE INITIATION</span>
+                <>
+                  <Send className="w-4 h-4 text-[#090d16]" />
+                  <span>EXECUTE PIPELINE INITIATION</span>
+                </>
               )}
             </button>
           </form>
         ) : (
           <div className="py-16 text-center font-mono space-y-4">
-            <CheckCircle2 className="w-12 h-12 text-[#22c55e] mx-auto animate-pulse" />
-            <h3 className="text-xl font-bold text-white tracking-wide">
+            <CheckCircle2 className="w-14 h-14 text-[#22c55e] mx-auto animate-pulse" />
+            <h3 className="text-xl sm:text-2xl font-bold text-white tracking-wide">
               TRANSMISSION RECEIVED
             </h3>
-            <p className="text-[#94a3b8] text-xs max-w-md mx-auto leading-relaxed">
+            <p className="text-[#94a3b8] text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
               Your engineering specifications have been successfully validated and logged. An SRE technical architect will evaluate your requirements and connect via email.
             </p>
             <button
@@ -218,7 +243,7 @@ export function ContactNode() {
                 setSubmitted(false);
                 setFormData({ name: "", email: "", projectDetails: "", honeypot: "" });
               }}
-              className="mt-4 px-6 py-2 rounded border border-[rgba(255,255,255,0.15)] text-xs text-[#94a3b8] hover:text-white hover:border-[#38bdf8] transition-colors cursor-pointer"
+              className="mt-4 px-6 py-2.5 rounded-xl border border-[rgba(255,255,255,0.15)] text-xs text-[#94a3b8] hover:text-white hover:border-[#38bdf8] hover:bg-[#38bdf8]/10 transition-all cursor-pointer"
             >
               Submit Another Inquiry
             </button>

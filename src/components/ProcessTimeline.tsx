@@ -1,5 +1,7 @@
+import React from "react";
 import { PROCESS_STEPS } from "@/data/processSteps";
 import { SectionHeader } from "./atoms/SectionHeader";
+import { ArrowRight } from "lucide-react";
 
 export function ProcessTimeline() {
   return (
@@ -7,19 +9,41 @@ export function ProcessTimeline() {
       <SectionHeader
         label="ENGINEERING METHODOLOGY // PROCESS"
         title="How We Build Reliability"
+        description="Our proven multi-stage consulting methodology transforms legacy deployment friction into hardened, automated delivery pipelines."
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
         {PROCESS_STEPS.map((s) => (
           <div
             key={s.step}
-            className="p-6 rounded-xl bg-[#0f172a] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(56,189,248,0.3)] transition-colors group"
+            className="p-8 rounded-3xl bg-[#0f172a] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(56,189,248,0.35)] hover:shadow-[0_12px_35px_rgba(0,0,0,0.5)] transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
           >
-            <span className="text-3xl font-mono font-bold text-[#38bdf8] block mb-3 group-hover:text-[#818cf8] transition-colors">
-              {s.step}
-            </span>
-            <h3 className="text-lg font-bold text-white mb-2">{s.name}</h3>
-            <p className="text-xs text-[#94a3b8] leading-relaxed">{s.desc}</p>
+            {/* Top Accent Gradient Line */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#38bdf8]/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-4xl font-mono font-black text-transparent bg-clip-text bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] block group-hover:scale-105 transition-transform duration-200">
+                  {s.step}
+                </span>
+                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-[#1e293b] border border-[rgba(255,255,255,0.06)] text-[#64748b]">
+                  {`PHASE ${s.step}`}
+                </span>
+              </div>
+
+              <h3 className="text-xl font-bold text-white mb-3 tracking-tight group-hover:text-[#38bdf8] transition-colors duration-200">
+                {s.name}
+              </h3>
+
+              <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed">
+                {s.desc}
+              </p>
+            </div>
+
+            <div className="pt-6 mt-6 border-t border-[rgba(255,255,255,0.06)] flex items-center justify-between text-[#64748b] group-hover:text-[#38bdf8] transition-colors">
+              <span className="text-[10px] font-mono tracking-wider uppercase">METHODOLOGY TRACK</span>
+              <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+            </div>
           </div>
         ))}
       </div>

@@ -15,7 +15,7 @@ export interface ValidationResult {
   };
 }
 
-const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)+$/;
 
 export function validateContactSubmission(data: Partial<ContactSubmission>): ValidationResult {
   const errors: ValidationResult["errors"] = {};

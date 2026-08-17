@@ -8,6 +8,10 @@ export interface PipelineStage {
     label: string;
     value: string;
   }[];
+  pillars?: {
+    label: string;
+    icon: string;
+  }[];
 }
 
 export interface ServiceModule {
