@@ -5,6 +5,7 @@ import { TECH_NODES } from "@/data/techNodes";
 import { SectionHeader } from "./atoms/SectionHeader";
 import { StatusDot } from "./atoms/StatusDot";
 import { MonoLabel } from "./atoms/MonoLabel";
+import { ScrollReveal } from "./interaction/ScrollReveal";
 import { cn } from "@/lib/cn";
 import { Cpu, Layers } from "lucide-react";
 
@@ -12,7 +13,7 @@ export function TechEcosystem() {
   const [activeTech, setActiveTech] = useState(TECH_NODES[0]);
 
   return (
-    <section className="py-24 px-6 max-w-7xl mx-auto border-t border-[rgba(255,255,255,0.08)]">
+    <section className="py-24 px-6 max-w-7xl mx-auto border-t border-[rgba(255,255,255,0.08)] chapter-proof">
       <SectionHeader
         label="CONNECTED ECOSYSTEM // TECH STACK"
         title="Interactive Architecture Matrix"
@@ -21,19 +22,27 @@ export function TechEcosystem() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Tech Grid */}
-        <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {TECH_NODES.map((node) => {
+        <ScrollReveal
+          direction="up"
+          className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-4"
+          as="div"
+        >
+          {TECH_NODES.map((node, index) => {
             const isActive = node.id === activeTech.id;
             return (
               <button
                 key={node.id}
                 onClick={() => setActiveTech(node)}
+                data-cursor="interactive"
+                style={{
+                  transitionDelay: `${index * 30}ms`,
+                }}
                 className={cn(
-                  "p-5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-36 cursor-pointer relative overflow-hidden",
+                  "p-5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-36 cursor-pointer relative overflow-hidden group",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090d16]",
                   isActive
                     ? "bg-[#0f172a] border-[#38bdf8] ring-1 ring-[#38bdf8] shadow-[0_0_25px_rgba(56,189,248,0.25)] scale-[1.02]"
-                    : "bg-[#090d16] border-[rgba(255,255,255,0.08)] hover:border-[#334155] hover:bg-[#0f172a]/60"
+                    : "bg-[#090d16] border-[rgba(255,255,255,0.08)] hover:border-[#38bdf8]/40 hover:bg-[#0f172a]/70 hover:-translate-y-1"
                 )}
               >
                 <div className="flex justify-between items-start">
@@ -41,17 +50,23 @@ export function TechEcosystem() {
                   <StatusDot status={isActive ? "accent" : "healthy"} pulse={isActive} size="md" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-white mb-1 tracking-tight">{node.name}</h4>
+                  <h4 className="text-lg font-bold text-white mb-1 tracking-tight group-hover:text-[#38bdf8] transition-colors">
+                    {node.name}
+                  </h4>
                   <MonoLabel className="text-[#818cf8]">{node.pipelineStage}</MonoLabel>
                 </div>
               </button>
             );
           })}
-        </div>
+        </ScrollReveal>
 
         {/* Node Inspector Panel */}
-        <div className="bg-[#0f172a] border border-[rgba(56,189,248,0.3)] rounded-3xl p-6 sm:p-8 flex flex-col justify-between min-h-[360px] shadow-2xl relative overflow-hidden backdrop-blur-xl">
-          <div>
+        <ScrollReveal
+          direction="right"
+          className="bg-[#0f172a] border border-[rgba(56,189,248,0.3)] rounded-3xl p-6 sm:p-8 flex flex-col justify-between min-h-[360px] shadow-2xl relative overflow-hidden backdrop-blur-xl"
+          as="div"
+        >
+          <div key={activeTech.id} className="transition-all duration-280 animate-in fade-in slide-in-from-bottom-2">
             <div className="flex items-center justify-between pb-3 border-b border-[rgba(255,255,255,0.08)] mb-5">
               <div className="flex items-center gap-2">
                 <Cpu className="w-4 h-4 text-[#38bdf8]" />
@@ -91,7 +106,7 @@ export function TechEcosystem() {
               <MonoLabel className="text-[#22c55e]">NOMINAL</MonoLabel>
             </div>
           </div>
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );

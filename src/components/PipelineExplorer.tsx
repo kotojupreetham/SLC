@@ -374,6 +374,7 @@ export function PipelineExplorer({ onClose }: PipelineExplorerProps) {
       <button
         ref={exitBtnRef}
         onClick={handleExit}
+        data-cursor="interactive"
         className="absolute right-4 top-4 z-40 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-[#030712]/50 text-[#94a3b8] backdrop-blur-md transition-all hover:border-[#38bdf8]/70 hover:bg-[#38bdf8]/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] sm:right-6 sm:top-6"
         aria-label="Exit Explorer"
       >
@@ -621,6 +622,7 @@ export function PipelineExplorer({ onClose }: PipelineExplorerProps) {
                 {/* 5. Primary Action Button */}
                 <button
                   onClick={handleExit}
+                  data-cursor="cta"
                   className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#38bdf8] text-white font-mono font-bold text-xs tracking-wider shadow-[0_0_25px_rgba(56,189,248,0.45)] hover:scale-105 active:scale-95 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:outline-none"
                 >
                   <span>RETURN TO PIPELINE</span>

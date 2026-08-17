@@ -6,6 +6,7 @@ import { MonoLabel } from "./atoms/MonoLabel";
 import { GlowBadge } from "./atoms/GlowBadge";
 import { SITE_CONTENT } from "@/data/siteContent";
 import { PipelineExplorer } from "./PipelineExplorer";
+import { useMagneticPointer } from "@/hooks/useMagneticPointer";
 import {
   ClipboardList,
   Code2,
@@ -71,6 +72,7 @@ function PipelineDial({
   return (
     <div
       onClick={onActivate}
+      data-cursor={isInteractive ? "interactive" : undefined}
       className={`relative rounded-full group select-none ${
         isInteractive
           ? "cursor-pointer transition-transform duration-500 hover:scale-[1.035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:ring-offset-4 focus-visible:ring-offset-[#030712]"
@@ -98,7 +100,7 @@ function PipelineDial({
         }}
       />
 
-      {/* Existing continuous lifecycle dial, scaled rather than replaced at smaller breakpoints. */}
+      {/* Continuous lifecycle dial */}
       <svg
         viewBox="0 0 1400 1400"
         className="w-full h-full transform-gpu will-change-transform dial-rotate-ccw"
@@ -249,9 +251,11 @@ function PipelineDial({
 export function InteractivePipeline() {
   const [isExplorerOpen, setIsExplorerOpen] = useState(false);
   const [activePreviewIndex, setActivePreviewIndex] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const ctaRef = useMagneticPointer<HTMLButtonElement>({ maxDisplacement: 5, strength: 0.25 });
 
-  // Smooth rotation timer that highlights the stage rotating to the top
   useEffect(() => {
+    setIsLoaded(true);
     // 64 seconds total rotation divided across 8 stages = 8s per stage
     const interval = setInterval(() => {
       setActivePreviewIndex((prev) => (prev + 1) % PIPELINE_STAGES.length);
@@ -263,7 +267,7 @@ export function InteractivePipeline() {
     <>
       <section
         id="pipeline"
-        className="relative w-full overflow-x-clip bg-[#030712] text-white"
+        className="relative w-full overflow-x-clip bg-[#030712] text-white chapter-signal"
       >
         {/* Ambient Glow Orbs */}
         <div className="ambient-orb orb-1" />
@@ -277,25 +281,65 @@ export function InteractivePipeline() {
 
           {/* ═══ HERO CONTENT ═══ */}
           <div className="relative z-20 w-full max-w-2xl px-6 sm:px-10 lg:absolute lg:left-12 lg:px-0 xl:left-20">
-            <GlowBadge className="mb-6">
-              {SITE_CONTENT.hero.badge}
-            </GlowBadge>
+            {/* Badge */}
+            <div
+              style={{
+                transitionDuration: "500ms",
+                transitionDelay: "100ms",
+              }}
+              className={`transition-all ${
+                isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+              }`}
+            >
+              <GlowBadge className="mb-6">
+                {SITE_CONTENT.hero.badge}
+              </GlowBadge>
+            </div>
 
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight mb-6 leading-[1.05] text-white">
+            {/* Headline */}
+            <h1
+              style={{
+                transitionDuration: "550ms",
+                transitionDelay: "200ms",
+              }}
+              className={`text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight mb-6 leading-[1.05] text-white transition-all ${
+                isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+              }`}
+            >
               {SITE_CONTENT.hero.headline}{" "}
               <span className="gradient-accent block">
                 {SITE_CONTENT.hero.headlineAccent}
               </span>
             </h1>
 
-            <p className="text-[#94a3b8] text-sm sm:text-base leading-relaxed mb-8 max-w-xl">
+            {/* Description */}
+            <p
+              style={{
+                transitionDuration: "550ms",
+                transitionDelay: "320ms",
+              }}
+              className={`text-[#94a3b8] text-sm sm:text-base leading-relaxed mb-8 max-w-xl transition-all ${
+                isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+              }`}
+            >
               {SITE_CONTENT.hero.description}
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 mb-8 lg:mb-0">
+            {/* CTA Actions */}
+            <div
+              style={{
+                transitionDuration: "550ms",
+                transitionDelay: "440ms",
+              }}
+              className={`flex flex-wrap items-center gap-4 mb-8 lg:mb-0 transition-all ${
+                isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+              }`}
+            >
               <button
+                ref={ctaRef}
                 onClick={() => setIsExplorerOpen(true)}
-                className="hidden md:inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase hover:scale-[1.03] active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(56,189,248,0.5)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:outline-none group"
+                data-cursor="cta"
+                className="hidden md:inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(56,189,248,0.5)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:outline-none group"
               >
                 <MousePointerClick className="w-4 h-4 animate-bounce group-hover:scale-110" />
                 EXPLORE PIPELINES
@@ -303,7 +347,8 @@ export function InteractivePipeline() {
 
               <button
                 onClick={() => setIsExplorerOpen(true)}
-                className="inline-flex md:hidden items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase hover:scale-[1.03] active:scale-[0.98] transition-all shadow-[0_0_24px_rgba(56,189,248,0.35)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:outline-none"
+                data-cursor="cta"
+                className="inline-flex md:hidden items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_24px_rgba(56,189,248,0.35)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:outline-none"
               >
                 <MousePointerClick className="w-4 h-4" />
                 EXPLORE LIFECYCLE
@@ -311,6 +356,7 @@ export function InteractivePipeline() {
 
               <a
                 href="#services"
+                data-cursor="interactive"
                 className="inline-flex md:hidden items-center gap-2 px-5 py-3 rounded-xl bg-[#0f172a] border border-[#38bdf8]/40 text-[#38bdf8] font-mono font-bold text-xs tracking-wider uppercase hover:bg-[#38bdf8]/10 transition-colors"
               >
                 <Layers className="w-4 h-4" />
@@ -319,6 +365,7 @@ export function InteractivePipeline() {
 
               <a
                 href="#services"
+                data-cursor="interactive"
                 className="inline-flex items-center gap-1 text-xs font-mono text-[#64748b] hover:text-[#94a3b8] transition-colors underline underline-offset-4"
               >
                 <span>or scroll to services</span>
@@ -378,11 +425,21 @@ export function InteractivePipeline() {
           </div>
 
           {/* ═══ TABLET & DESKTOP: Interactive Continuous Lifecycle Wheel ═══ */}
-          <PipelineDial
-            activeIndex={activePreviewIndex}
-            onActivate={() => setIsExplorerOpen(true)}
-            className="hidden md:block mt-10 h-[min(52vw,390px)] w-[min(52vw,390px)] self-center z-10 lg:absolute lg:right-6 lg:top-1/2 lg:mt-0 lg:h-[390px] lg:w-[390px] lg:-translate-y-1/2 xl:right-16 xl:h-[460px] xl:w-[460px]"
-          />
+          <div
+            style={{
+              transitionDuration: "700ms",
+              transitionDelay: "300ms",
+            }}
+            className={`hidden md:block mt-10 h-[min(52vw,390px)] w-[min(52vw,390px)] self-center z-10 lg:absolute lg:right-6 lg:top-1/2 lg:mt-0 lg:h-[390px] lg:w-[390px] lg:-translate-y-1/2 xl:right-16 xl:h-[460px] xl:w-[460px] transition-all ${
+              isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
+            }`}
+          >
+            <PipelineDial
+              activeIndex={activePreviewIndex}
+              onActivate={() => setIsExplorerOpen(true)}
+              className="w-full h-full"
+            />
+          </div>
         </div>
       </section>
 

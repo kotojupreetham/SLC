@@ -5,17 +5,25 @@ import { CONTROL_METRICS } from "@/data/controlRoomMetrics";
 import { SectionHeader } from "./atoms/SectionHeader";
 import { StatusDot } from "./atoms/StatusDot";
 import { MonoLabel } from "./atoms/MonoLabel";
+import { ScrollReveal } from "./interaction/ScrollReveal";
+import { useInViewOnce } from "@/hooks/useInViewOnce";
 
 function AnimatedProgress({ percent }: { percent: number }) {
+  const [containerRef, isInView] = useInViewOnce<HTMLDivElement>({ threshold: 0.1 });
   const [width, setWidth] = useState(0);
 
   useEffect(() => {
-    const timer = setTimeout(() => setWidth(percent), 200);
-    return () => clearTimeout(timer);
-  }, [percent]);
+    if (isInView) {
+      const timer = setTimeout(() => setWidth(percent), 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isInView, percent]);
 
   return (
-    <div className="w-full h-2.5 bg-[#1e293b] rounded-full overflow-hidden p-0.5 border border-[rgba(255,255,255,0.05)]">
+    <div
+      ref={containerRef}
+      className="w-full h-2.5 bg-[#1e293b] rounded-full overflow-hidden p-0.5 border border-[rgba(255,255,255,0.05)]"
+    >
       <div
         className="h-full bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(56,189,248,0.5)]"
         style={{ width: `${width}%` }}
@@ -29,14 +37,18 @@ export function ControlRoom() {
   const barMetrics = CONTROL_METRICS.filter((m) => m.progressPercent !== undefined);
 
   return (
-    <section className="py-24 px-6 max-w-7xl mx-auto border-t border-[rgba(255,255,255,0.08)]">
+    <section className="py-24 px-6 max-w-7xl mx-auto border-t border-[rgba(255,255,255,0.08)] chapter-confidence">
       <SectionHeader
         label="SYSTEM TELEMETRY // CONTROL ROOM"
         title="Engineering Control Room"
         description="Illustrative delivery telemetry demonstrating the real-time operational visibility SRE builds into client delivery pipelines."
       />
 
-      <div className="bg-[#0f172a] border border-[rgba(56,189,248,0.3)] rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl">
+      <ScrollReveal
+        direction="up"
+        className="bg-[#0f172a] border border-[rgba(56,189,248,0.3)] rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl relative"
+        as="div"
+      >
         {/* Header bar */}
         <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] bg-[#090d16]/80 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -64,7 +76,7 @@ export function ControlRoom() {
           {topMetrics.map((metric) => (
             <div
               key={metric.id}
-              className="bg-[#0f172a] p-6 flex flex-col items-center text-center gap-2 hover:bg-[#131d35] transition-colors"
+              className="bg-[#0f172a] p-6 flex flex-col items-center text-center gap-2 hover:bg-[#131d35] transition-colors cursor-default"
             >
               <MonoLabel className="text-[#64748b] uppercase tracking-wider">{metric.label}</MonoLabel>
               <span className="text-2xl sm:text-3xl font-mono font-black text-white tracking-tight">
@@ -96,7 +108,7 @@ export function ControlRoom() {
             </div>
           ))}
         </div>
-      </div>
+      </ScrollReveal>
     </section>
   );
 }

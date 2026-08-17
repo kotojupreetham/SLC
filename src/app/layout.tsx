@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { CustomCursor } from "@/components/interaction/CustomCursor";
+import { BackgroundCanvas } from "@/components/interaction/BackgroundCanvas";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sre.engineering";
 
@@ -55,7 +57,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body>{children}</body>
+      <body>
+        <BackgroundCanvas />
+        <CustomCursor />
+        {children}
+      </body>
     </html>
   );
 }

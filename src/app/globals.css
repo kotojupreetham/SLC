@@ -45,6 +45,23 @@ body {
   color: #030712;
 }
 
+/* --- Focus Rings --- */
+:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+.focus-ring {
+  transition: box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.focus-ring:focus-visible {
+  outline: none;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 2px #030712, 0 0 0 4px #38bdf8, 0 0 20px rgba(56, 189, 248, 0.35);
+}
+
 /* --- Custom Scrollbar --- */
 ::-webkit-scrollbar {
   width: 7px;
@@ -71,7 +88,7 @@ body {
   position: absolute;
   border-radius: 50%;
   filter: blur(120px);
-  opacity: 0.38;
+  opacity: 0.35;
   pointer-events: none;
   z-index: 0;
   transform: translateZ(0);
@@ -118,7 +135,7 @@ body {
   }
 }
 
-/* --- CONTINUOUS DIAL ROTATION (small preview circle) --- */
+/* --- CONTINUOUS DIAL ROTATION (preview circle) --- */
 
 @keyframes dialRotateCcw {
   from {
@@ -134,7 +151,62 @@ body {
   transform-origin: center center;
 }
 
-/* --- ULTRA GLASSMORPHISM --- */
+/* --- CHAPTER LIGHT FIELDS (Subtle Page Pacing) --- */
+
+.chapter-signal {
+  background: radial-gradient(
+    800px circle at 50% 15%,
+    rgba(56, 189, 248, 0.05),
+    transparent 70%
+  );
+}
+
+.chapter-proof {
+  background: radial-gradient(
+    900px circle at 50% 30%,
+    rgba(129, 140, 248, 0.04),
+    transparent 70%
+  );
+}
+
+.chapter-confidence {
+  background: radial-gradient(
+    800px circle at 50% 40%,
+    rgba(56, 189, 248, 0.06),
+    transparent 65%
+  );
+}
+
+/* --- CIRCUIT DIVIDERS --- */
+
+.circuit-divider {
+  position: relative;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.08) 20%,
+    rgba(56, 189, 248, 0.25) 50%,
+    rgba(56, 189, 248, 0.08) 80%,
+    transparent 100%
+  );
+}
+
+.circuit-divider::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background-color: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+}
+
+/* --- SURFACE TIERS & GLASSMORPHISM --- */
 
 .glass-panel {
   background: linear-gradient(
@@ -153,16 +225,40 @@ body {
 }
 
 .glass-panel-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 240ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 240ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.glass-panel-hover:hover {
-  border-color: rgba(56, 189, 248, 0.4);
-  box-shadow: 0 0 30px rgba(56, 189, 248, 0.15),
-    inset 0 0 20px rgba(56, 189, 248, 0.08);
+@media (hover: hover) and (pointer: fine) {
+  .glass-panel-hover:hover {
+    border-color: rgba(56, 189, 248, 0.4);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4),
+      0 0 25px rgba(56, 189, 248, 0.12),
+      inset 0 0 20px rgba(56, 189, 248, 0.06);
+    transform: translateY(-2px);
+  }
+}
+
+/* --- INTERACTIVE CARD HOVER --- */
+
+.interactive-card {
+  transition: border-color 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .interactive-card:hover {
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45),
+      0 0 20px rgba(56, 189, 248, 0.08);
+    transform: translateY(-3px);
+  }
 }
 
 /* --- GLOW TEXT GRADIENTS --- */
+
 .gradient-heading {
   background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #38bdf8 100%);
   -webkit-background-clip: text;
@@ -175,7 +271,7 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* --- PIPELINE ACTIVATION SURFACE --- */
+/* --- PIPELINE ACTIVATION BUTTON --- */
 
 .pipeline-explore-button {
   position: relative;
@@ -200,22 +296,27 @@ body {
   transition: transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.pipeline-explore-button:hover {
-  transform: translateY(-2px) scale(1.03);
-  filter: saturate(1.1) brightness(1.05);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.44) inset,
-    0 18px 42px rgba(14, 116, 144, 0.5),
-    0 0 46px rgba(56, 189, 248, 0.64);
+@media (hover: hover) and (pointer: fine) {
+  .pipeline-explore-button:hover {
+    transform: translateY(-2px) scale(1.02);
+    filter: saturate(1.1) brightness(1.05);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.44) inset,
+      0 18px 42px rgba(14, 116, 144, 0.5),
+      0 0 46px rgba(56, 189, 248, 0.64);
+  }
+
+  .pipeline-explore-button:hover::before {
+    transform: skewX(-22deg) translateX(640%);
+  }
 }
 
-.pipeline-explore-button:hover::before {
-  transform: skewX(-22deg) translateX(640%);
+.pipeline-explore-button:active {
+  transform: translateY(0px) scale(0.98);
 }
 
 /* --- PIPELINE EXPLORER RESPONSIVE GEOMETRY --- */
 
 .pipeline-explorer-scene {
-  /* On desktop, the wheel is framed as a half-circle dome: its centre sits below the viewport. */
   --pipeline-wheel-size: clamp(1280px, 200vmin, 3200px);
 }
 
@@ -224,7 +325,6 @@ body {
   height: var(--pipeline-wheel-size);
 }
 
-/* Keep the center card within the SVG's inner clearance zone at every viewport. */
 .pipeline-explorer-card {
   width: min(calc(100vw - 2rem), calc(var(--pipeline-wheel-size) * 0.56));
   max-width: 480px;
