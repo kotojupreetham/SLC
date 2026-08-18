@@ -96,7 +96,7 @@ export function TechEcosystem() {
                 onMouseMove={handlePointerMove}
                 data-cursor="interactive"
                 className={cn(
-                  "tech-card p-5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-36 cursor-pointer relative overflow-hidden group",
+                                  "tech-card neon-card p-5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-36 cursor-pointer relative overflow-hidden group",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090d16]",
                   isActive
                     ? "bg-[#0f172a] border-[#38bdf8] ring-1 ring-[#38bdf8] shadow-[0_0_25px_rgba(56,189,248,0.3),0_0_35px_rgba(129,140,248,0.15)] scale-[1.02]"

@@ -32,10 +32,6 @@ export function BackgroundCanvas() {
     let animationFrameId: number;
     let particles: TelemetryParticle[] = [];
     let time = 0;
-    const particleCount = Math.min(
-      52,
-      Math.floor((window.innerWidth * window.innerHeight) / 28000)
-    );
 
     // Color maps: Cyan, Purple/Violet, Indigo, Emerald
     const colorPairs = [
@@ -45,23 +41,56 @@ export function BackgroundCanvas() {
       { dark: "rgba(34, 197, 94, ", light: "rgba(22, 163, 74, " }, // Emerald
     ];
 
+    // Resize with devicePixelRatio scaling for crisp canvas and debounce to avoid thrash
+    let resizeTimeout: number | null = null;
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       initParticles();
     };
 
     const initParticles = () => {
       particles = [];
-      for (let i = 0; i < particleCount; i++) {
-        const radius = Math.random() * 2.0 + 1.2;
-        const alpha = Math.random() * 0.4 + 0.2;
+      // Recompute particleCount with sensible limits to bound CPU usage
+      // Adjust count based on device capabilities to keep low-end devices smooth
+      let baseCount = Math.floor((window.innerWidth * window.innerHeight) / 50000);
+      baseCount = Math.max(6, baseCount);
+
+      // Perf heuristics
+      let perfMultiplier = 1;
+      try {
+        // deviceMemory (GB) and hardwareConcurrency (logical cores) are good heuristics
+        // Use typed access without 'any' to satisfy lint rules
+        const navTyped = navigator as unknown as { deviceMemory?: number };
+        const mem = navTyped.deviceMemory ?? 8;
+        const cores = navigator.hardwareConcurrency ?? 4;
+        if (mem <= 2) perfMultiplier *= 0.45;
+        else if (mem <= 4) perfMultiplier *= 0.7;
+        if (cores <= 2) perfMultiplier *= 0.6;
+        else if (cores <= 4) perfMultiplier *= 0.8;
+      } catch {
+        // ignore if APIs not available
+      }
+
+      // Reduce density further on very small viewports (mobile)
+      const viewportArea = window.innerWidth * window.innerHeight;
+      if (viewportArea < 360 * 640) perfMultiplier *= 0.6;
+
+      const computedCount = Math.min(48, Math.max(6, Math.floor(baseCount * perfMultiplier)));
+
+      for (let i = 0; i < computedCount; i++) {
+        const radius = Math.random() * 2.0 + 1.0;
+        const alpha = Math.random() * 0.3 + 0.12;
         const pair = colorPairs[Math.floor(Math.random() * colorPairs.length)];
         particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.28,
-          vy: (Math.random() - 0.5) * 0.28,
+          x: Math.random() * (canvas.width / (window.devicePixelRatio || 1)),
+          y: Math.random() * (canvas.height / (window.devicePixelRatio || 1)),
+          vx: (Math.random() - 0.5) * 0.22,
+          vy: (Math.random() - 0.5) * 0.22,
           radius,
           colorDark: pair.dark,
           colorLight: pair.light,
@@ -69,6 +98,15 @@ export function BackgroundCanvas() {
           alpha,
         });
       }
+    };
+
+    // Debounced resize handler
+    const handleResize = () => {
+      if (resizeTimeout) window.clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(() => {
+        resizeCanvas();
+        resizeTimeout = null;
+      }, 120);
     };
 
     const drawParticles = () => {
@@ -238,11 +276,12 @@ export function BackgroundCanvas() {
     };
 
     const animate = () => {
+      if (document.hidden) return; // pause rendering when tab not visible
       drawParticles();
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("resize", handleResize);
     resizeCanvas();
     animate();
 
@@ -256,14 +295,24 @@ export function BackgroundCanvas() {
       mouseRef.current.active = false;
     };
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // reduce CPU while backgrounded
+        mouseRef.current.active = false;
+      }
+    };
+
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     document.addEventListener("mouseleave", handleMouseLeave);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeave);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (resizeTimeout) window.clearTimeout(resizeTimeout);
     };
   }, [prefersReducedMotion]);
 

@@ -74,9 +74,16 @@ export default function Home() {
   };
 
   return (
-    <main ref={mainRef} id="main-content" className="min-h-screen text-white selection:bg-[#38bdf8] selection:text-[#030712]">
+    <main ref={mainRef} id="main-content" className="min-h-screen text-white selection:bg-[#38bdf8] selection:text-[#030712] relative overflow-hidden">
+      {/* Ambient orbs for neon purple/cyan atmosphere (decorative) */}
+      <div aria-hidden className="ambient-orb orb-purple" />
+      <div aria-hidden className="ambient-orb orb-1" />
+      <div aria-hidden className="ambient-orb orb-2" />
+
       {/* Sticky Header Navbar */}
       <Header />
+      {/* Header spacer to prevent content overlap with fixed header */}
+      <div aria-hidden className="h-20 lg:h-24" />
 
       {/* Hero + Interactive Rotating Pipeline Dial */}
       <InteractivePipeline />

@@ -3,6 +3,7 @@
 import React from "react";
 import { useInViewOnce } from "@/hooks/useInViewOnce";
 import { cn } from "@/lib/cn";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface ScrollRevealProps {
   children: React.ReactNode;
@@ -24,9 +25,10 @@ export function ScrollReveal({
   threshold = 0.15,
 }: ScrollRevealProps) {
   const [ref, isInView] = useInViewOnce<HTMLElement>({ threshold });
+  const prefersReducedMotion = useReducedMotion();
 
   const getDirectionTransform = () => {
-    if (isInView) return "translate-x-0 translate-y-0";
+    if (isInView || prefersReducedMotion) return "translate-x-0 translate-y-0";
     switch (direction) {
       case "up":
         return "translate-y-6";
@@ -42,6 +44,15 @@ export function ScrollReveal({
   };
 
   const calculatedDelayMs = delay > 0 ? delay : staggerIndex * 60;
+
+  // If the user prefers reduced motion, render content without transitions for accessibility
+  if (prefersReducedMotion) {
+    return (
+      <Component ref={ref} className={cn(className)}>
+        {children}
+      </Component>
+    );
+  }
 
   return (
     <Component

@@ -68,12 +68,31 @@ export function CustomCursor() {
       }
     };
 
+    // Track when keyboard navigation is active to keep custom cursor hidden during keyboard interactions
+    let keyboardNavTimeout: number | null = null;
     const onKeyDown = () => {
       // Hide custom cursor on keyboard navigation
       isVisible = false;
       if (dot && ring) {
         dot.style.opacity = "0";
         ring.style.opacity = "0";
+      }
+
+      // Keep it hidden for a short period so users can navigate with keyboard without distraction
+      if (keyboardNavTimeout) window.clearTimeout(keyboardNavTimeout);
+      keyboardNavTimeout = window.setTimeout(() => {
+        keyboardNavTimeout = null;
+      }, 1500);
+    };
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        // Pause visuals when tab is hidden
+        isVisible = false;
+        if (dot && ring) {
+          dot.style.opacity = "0";
+          ring.style.opacity = "0";
+        }
       }
     };
 
@@ -82,38 +101,47 @@ export function CustomCursor() {
     window.addEventListener("mouseup", onMouseUp, { passive: true });
     document.addEventListener("mouseleave", onMouseLeave);
     window.addEventListener("keydown", onKeyDown, { passive: true });
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     // Smooth animation loop using requestAnimationFrame
     const animate = () => {
-      // Lerp ring towards mouse position
-      const ringLerp = 0.18;
+      // Lerp ring towards mouse position (slightly faster follow for smoother feel)
+      const ringLerp = 0.22;
       ringX += (mouseX - ringX) * ringLerp;
       ringY += (mouseY - ringY) * ringLerp;
 
       if (dot && ring) {
-        dot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%) scale(${
-          isClicking ? 0.7 : 1
-        })`;
+        // If keyboard navigation was recently used, keep hidden
+        if (keyboardNavTimeout) {
+          dot.style.opacity = "0";
+          ring.style.opacity = "0";
+        } else {
+          dot.style.opacity = isVisible ? "1" : dot.style.opacity || "0";
+          ring.style.opacity = isVisible ? "1" : ring.style.opacity || "0";
+        }
+
+        dot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%) scale(${isClicking ? 0.78 : 1})`;
 
         let ringScale = 1;
         if (isClicking) {
-          ringScale = 0.85;
+          ringScale = 0.9;
         } else if (isHoveringCTA) {
-          ringScale = 1.45;
+          // Slightly reduce CTA scale to be less dominating
+          ringScale = 1.3;
         } else if (isHoveringInteractive) {
-          ringScale = 1.2;
+          ringScale = 1.12;
         }
 
         ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%) scale(${ringScale})`;
 
         if (isHoveringCTA) {
-          ring.style.borderColor = "rgba(56, 189, 248, 0.75)";
-          ring.style.backgroundColor = "rgba(56, 189, 248, 0.08)";
+          ring.style.borderColor = "rgba(56, 189, 248, 0.72)";
+          ring.style.backgroundColor = "rgba(56, 189, 248, 0.06)";
         } else if (isHoveringInteractive) {
-          ring.style.borderColor = "rgba(56, 189, 248, 0.45)";
-          ring.style.backgroundColor = "rgba(56, 189, 248, 0.03)";
+          ring.style.borderColor = "rgba(56, 189, 248, 0.42)";
+          ring.style.backgroundColor = "rgba(56, 189, 248, 0.02)";
         } else {
-          ring.style.borderColor = "rgba(56, 189, 248, 0.25)";
+          ring.style.borderColor = "rgba(56, 189, 248, 0.20)";
           ring.style.backgroundColor = "transparent";
         }
       }
@@ -129,6 +157,8 @@ export function CustomCursor() {
       window.removeEventListener("mouseup", onMouseUp);
       document.removeEventListener("mouseleave", onMouseLeave);
       window.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (keyboardNavTimeout) window.clearTimeout(keyboardNavTimeout);
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, [prefersReducedMotion]);
@@ -143,9 +173,9 @@ export function CustomCursor() {
       {/* Outer soft ring */}
       <div
         ref={ringRef}
-        className="fixed top-0 left-0 w-8 h-8 rounded-full border border-[rgba(56,189,248,0.25)] pointer-events-none opacity-0 transition-[border-color,background-color] duration-200 will-change-transform"
+        className="fixed top-0 left-0 w-6 h-6 rounded-full border border-[rgba(56,189,248,0.25)] pointer-events-none opacity-0 transition-[border-color,background-color] duration-200 will-change-transform"
         style={{
-          boxShadow: "0 0 12px rgba(56, 189, 248, 0.15)",
+          boxShadow: "0 0 8px rgba(56, 189, 248, 0.12)",
         }}
       />
       {/* Inner precise dot */}

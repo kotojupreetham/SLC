@@ -87,7 +87,7 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Keyboard accessibility for mobile menu (Escape key)
+  // Keyboard accessibility and focus management for mobile menu
   useEffect(() => {
     if (!mobileMenuOpen) return;
 
@@ -98,6 +98,13 @@ export function Header() {
     };
 
     window.addEventListener("keydown", handleKeyDown);
+
+    // Focus first link in mobile menu for keyboard users
+    if (mobileMenuRef.current) {
+      const firstLink = mobileMenuRef.current.querySelector('a');
+      (firstLink as HTMLElement | null)?.focus();
+    }
+
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mobileMenuOpen]);
 
@@ -155,6 +162,7 @@ export function Header() {
                   key={link.name}
                   href={link.href}
                   data-cursor="interactive"
+                  aria-current={isActive ? "page" : undefined}
                   className={`relative px-3.5 py-1.5 rounded-lg text-xs font-mono tracking-wider uppercase transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#38bdf8] ${
                     isActive
                       ? "text-[#38bdf8] font-bold bg-[#38bdf8]/15 border border-[#38bdf8]/40 shadow-[0_0_14px_rgba(56,189,248,0.2)]"
@@ -220,6 +228,9 @@ export function Header() {
         {mobileMenuOpen && (
           <div
             ref={mobileMenuRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile Navigation"
             className="lg:hidden mt-2 mx-auto max-w-7xl p-5 sm:p-6 rounded-2xl bg-[#0f172a]/95 border border-[rgba(56,189,248,0.3)] backdrop-blur-2xl flex flex-col gap-2 shadow-[0_16px_40px_rgba(0,0,0,0.65)] animate-in fade-in slide-in-from-top-2 duration-200"
           >
             {NAV_LINKS.map((link) => {
@@ -229,6 +240,7 @@ export function Header() {
                   key={link.name}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
+                  aria-current={isActive ? "page" : undefined}
                   className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-mono uppercase tracking-wider transition-colors ${
                     isActive
                       ? "text-[#38bdf8] font-bold bg-[#38bdf8]/15 border border-[#38bdf8]/40"
