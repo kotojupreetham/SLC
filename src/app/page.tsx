@@ -77,6 +77,8 @@ export default function Home() {
     <main ref={mainRef} id="main-content" className="min-h-screen text-white selection:bg-[#38bdf8] selection:text-[#030712]">
       {/* Sticky Header Navbar */}
       <Header />
+      {/* Header spacer to prevent content overlap with fixed header */}
+      <div aria-hidden className="h-20 lg:h-24" />
 
       {/* Hero + Interactive Rotating Pipeline Dial */}
       <InteractivePipeline />
