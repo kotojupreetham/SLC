@@ -572,18 +572,18 @@ export function PipelineExplorer({ onClose }: PipelineExplorerProps) {
 
             {/* ═══ CENTER CONTENT (Inside Inner Circle Clearance Zone) ═══ */}
             <div
-              className="pipeline-explorer-card absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-auto"
+              className="pipeline-explorer-card absolute left-1/2 top-1/2 lg:top-[60%] -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-auto"
             >
               {/* Keep centering on the outer element; GSAP only animates this inner layer. */}
               <div ref={infoRef} className="w-full">
                 <div
                   ref={infoInnerRef}
                   aria-live="polite"
-                  className="flex flex-col items-center text-center px-4 py-5 sm:px-7 sm:py-6 transition-all duration-300"
+                  className="flex flex-col items-center text-center px-4 py-4 sm:px-6 sm:py-5 transition-all duration-300"
                 >
                 {/* 1. Stage Counter Pill */}
                 <div
-                  className="px-4 py-1.5 rounded-full border bg-[#030712]/80 backdrop-blur-md mb-2.5 flex items-center gap-2 transition-all duration-300"
+                  className="px-4 py-1.5 rounded-full border bg-[#030712]/80 backdrop-blur-md mb-2 flex items-center gap-2 transition-all duration-300"
                   style={{
                     borderColor: `${activeColor.main}50`,
                     boxShadow: `0 0 15px ${activeColor.glow}`,
@@ -596,17 +596,17 @@ export function PipelineExplorer({ onClose }: PipelineExplorerProps) {
                 </div>
 
                 {/* 2. Bold Stage Title */}
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-1.5 drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mb-1 drop-shadow-[0_0_25px_rgba(255,255,255,0.25)]">
                   {activeStage.title}
                 </h2>
 
                 {/* 3. Description */}
-                <p className="text-xs sm:text-sm text-[#cbd5e1] leading-relaxed mb-4 max-w-[420px]">
+                <p className="text-xs sm:text-sm text-[#cbd5e1] leading-relaxed mb-3.5 max-w-[420px]">
                   {activeStage.description}
                 </p>
 
                 {/* 4. 4 Pillar Feature Cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full mb-5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full mb-4">
                   {activeStage.pillars?.map((pillar, idx) => (
                     <div key={idx} className="flex flex-col items-center justify-center p-1.5 transition-transform duration-200 hover:scale-105">
                       <div className="mb-1 flex h-8 w-8 items-center justify-center rounded-full text-[#38bdf8] bg-[#38bdf8]/10 ring-1 ring-[#38bdf8]/30">
