@@ -45,21 +45,29 @@ export function BackgroundCanvas() {
       { dark: "rgba(34, 197, 94, ", light: "rgba(22, 163, 74, " }, // Emerald
     ];
 
+    // Resize with devicePixelRatio scaling for crisp canvas and debounce to avoid thrash
+    let resizeTimeout: number | null = null;
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       initParticles();
     };
 
     const initParticles = () => {
       particles = [];
-      for (let i = 0; i < particleCount; i++) {
+      // Recompute particleCount with sensible limits to bound CPU usage
+      const computedCount = Math.min(52, Math.max(12, Math.floor((window.innerWidth * window.innerHeight) / 50000)));
+      for (let i = 0; i < computedCount; i++) {
         const radius = Math.random() * 2.0 + 1.2;
-        const alpha = Math.random() * 0.4 + 0.2;
+        const alpha = Math.random() * 0.4 + 0.15;
         const pair = colorPairs[Math.floor(Math.random() * colorPairs.length)];
         particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
+          x: Math.random() * (canvas.width / (window.devicePixelRatio || 1)),
+          y: Math.random() * (canvas.height / (window.devicePixelRatio || 1)),
           vx: (Math.random() - 0.5) * 0.28,
           vy: (Math.random() - 0.5) * 0.28,
           radius,
@@ -69,6 +77,15 @@ export function BackgroundCanvas() {
           alpha,
         });
       }
+    };
+
+    // Debounced resize handler
+    const handleResize = () => {
+      if (resizeTimeout) window.clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(() => {
+        resizeCanvas();
+        resizeTimeout = null;
+      }, 120);
     };
 
     const drawParticles = () => {
@@ -238,11 +255,12 @@ export function BackgroundCanvas() {
     };
 
     const animate = () => {
+      if (document.hidden) return; // pause rendering when tab not visible
       drawParticles();
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("resize", handleResize);
     resizeCanvas();
     animate();
 
@@ -256,14 +274,24 @@ export function BackgroundCanvas() {
       mouseRef.current.active = false;
     };
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // reduce CPU while backgrounded
+        mouseRef.current.active = false;
+      }
+    };
+
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     document.addEventListener("mouseleave", handleMouseLeave);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeave);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (resizeTimeout) window.clearTimeout(resizeTimeout);
     };
   }, [prefersReducedMotion]);
 

@@ -68,12 +68,31 @@ export function CustomCursor() {
       }
     };
 
+    // Track when keyboard navigation is active to keep custom cursor hidden during keyboard interactions
+    let keyboardNavTimeout: number | null = null;
     const onKeyDown = () => {
       // Hide custom cursor on keyboard navigation
       isVisible = false;
       if (dot && ring) {
         dot.style.opacity = "0";
         ring.style.opacity = "0";
+      }
+
+      // Keep it hidden for a short period so users can navigate with keyboard without distraction
+      if (keyboardNavTimeout) window.clearTimeout(keyboardNavTimeout);
+      keyboardNavTimeout = window.setTimeout(() => {
+        keyboardNavTimeout = null;
+      }, 1500);
+    };
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        // Pause visuals when tab is hidden
+        isVisible = false;
+        if (dot && ring) {
+          dot.style.opacity = "0";
+          ring.style.opacity = "0";
+        }
       }
     };
 
@@ -82,6 +101,7 @@ export function CustomCursor() {
     window.addEventListener("mouseup", onMouseUp, { passive: true });
     document.addEventListener("mouseleave", onMouseLeave);
     window.addEventListener("keydown", onKeyDown, { passive: true });
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     // Smooth animation loop using requestAnimationFrame
     const animate = () => {
@@ -91,9 +111,16 @@ export function CustomCursor() {
       ringY += (mouseY - ringY) * ringLerp;
 
       if (dot && ring) {
-        dot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%) scale(${
-          isClicking ? 0.7 : 1
-        })`;
+        // If keyboard navigation was recently used, keep hidden
+        if (keyboardNavTimeout) {
+          dot.style.opacity = "0";
+          ring.style.opacity = "0";
+        } else {
+          dot.style.opacity = isVisible ? "1" : dot.style.opacity || "0";
+          ring.style.opacity = isVisible ? "1" : ring.style.opacity || "0";
+        }
+
+        dot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%) scale(${isClicking ? 0.7 : 1})`;
 
         let ringScale = 1;
         if (isClicking) {
@@ -129,6 +156,8 @@ export function CustomCursor() {
       window.removeEventListener("mouseup", onMouseUp);
       document.removeEventListener("mouseleave", onMouseLeave);
       window.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (keyboardNavTimeout) window.clearTimeout(keyboardNavTimeout);
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, [prefersReducedMotion]);
