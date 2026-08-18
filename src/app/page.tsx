@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Header } from "@/components/Header";
 import { InteractivePipeline } from "@/components/InteractivePipeline";
 import { EngineeringDashboard } from "@/components/EngineeringDashboard";
@@ -13,9 +15,15 @@ import { SITE_CONTENT } from "@/data/siteContent";
 import { StatusDot } from "@/components/atoms/StatusDot";
 import { MonoLabel } from "@/components/atoms/MonoLabel";
 import { ArrowUp, Terminal, Mail } from "lucide-react";
+import { isReducedMotion } from "@/lib/gsapHelpers";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 export default function Home() {
   const [utcTime, setUtcTime] = useState<string>("");
+  const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -29,53 +37,105 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  // Section-level ScrollTrigger smooth entrance sequence
+  useEffect(() => {
+    if (typeof window === "undefined" || !mainRef.current) return;
+
+    const ctx = gsap.context(() => {
+      if (isReducedMotion()) return;
+
+      const sections = mainRef.current?.querySelectorAll(".smooth-section-reveal");
+      if (!sections) return;
+
+      sections.forEach((section) => {
+        gsap.fromTo(
+          section,
+          { opacity: 0.15, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: section,
+              start: "top 85%",
+              toggleActions: "play none none reverse",
+            },
+          }
+        );
+      });
+    }, mainRef);
+
+    return () => ctx.revert();
+  }, []);
+
   const handleBackToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
-    <main id="main-content" className="min-h-screen text-white selection:bg-[#38bdf8] selection:text-[#030712]">
+    <main ref={mainRef} id="main-content" className="min-h-screen text-white selection:bg-[#38bdf8] selection:text-[#030712]">
       {/* Sticky Header Navbar */}
       <Header />
 
       {/* Hero + Interactive Rotating Pipeline Dial */}
       <InteractivePipeline />
 
+      {/* Neon Circuit Divider */}
+      <div className="neon-divider my-2" />
+
       {/* Services Console — Trust */}
-      <div id="services">
+      <div id="services" className="smooth-section-reveal">
         <EngineeringDashboard />
       </div>
 
+      {/* Neon Circuit Divider */}
+      <div className="neon-divider my-2" />
+
       {/* Technology Matrix — Confidence */}
-      <div id="matrix">
+      <div id="matrix" className="smooth-section-reveal">
         <TechEcosystem />
       </div>
 
+      {/* Neon Circuit Divider */}
+      <div className="neon-divider my-2" />
+
       {/* Case Studies — Proof */}
-      <div id="stories">
+      <div id="stories" className="smooth-section-reveal">
         <DeploymentStories />
       </div>
 
+      {/* Neon Circuit Divider */}
+      <div className="neon-divider my-2" />
+
       {/* Process — Methodology */}
-      <ProcessTimeline />
+      <div className="smooth-section-reveal">
+        <ProcessTimeline />
+      </div>
+
+      {/* Neon Circuit Divider */}
+      <div className="neon-divider my-2" />
 
       {/* Control Room — Telemetry Dashboard */}
-      <div id="telemetry">
+      <div id="telemetry" className="smooth-section-reveal">
         <ControlRoom />
       </div>
 
+      {/* Neon Circuit Divider */}
+      <div className="neon-divider my-2" />
+
       {/* Contact Terminal */}
-      <div id="contact">
+      <div id="contact" className="smooth-section-reveal">
         <ContactNode />
       </div>
 
-      {/* Upgraded SRE Terminal Footer */}
-      <footer className="py-14 border-t border-[rgba(255,255,255,0.08)] bg-[#030712]/90 backdrop-blur-md">
+      {/* Upgraded SRE Terminal Footer with Neon Glassmorphism */}
+      <footer className="py-14 border-t border-[rgba(129,140,248,0.18)] bg-[#030712]/95 backdrop-blur-2xl shadow-[0_-10px_30px_rgba(0,0,0,0.5),0_0_30px_rgba(129,140,248,0.05)]">
         <div className="max-w-7xl mx-auto px-6 space-y-8">
           {/* Top Bar: Brand, Status, Social & Back to Top */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-[rgba(255,255,255,0.06)]">
             <div className="flex items-center gap-3.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#38bdf8] via-[#60a5fa] to-[#818cf8] flex items-center justify-center font-mono font-black text-xs text-[#030712] shadow-[0_0_15px_rgba(56,189,248,0.4)]">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#38bdf8] via-[#60a5fa] to-[#818cf8] flex items-center justify-center font-mono font-black text-xs text-[#030712] shadow-[0_0_18px_rgba(56,189,248,0.5)]">
                 SRE
               </div>
               <div className="flex flex-col">
@@ -96,7 +156,7 @@ export default function Home() {
                 rel="noopener noreferrer"
                 data-cursor="interactive"
                 aria-label="GitHub Repository"
-                className="p-2.5 rounded-xl bg-[#090d16] border border-[rgba(255,255,255,0.08)] text-[#94a3b8] hover:text-[#38bdf8] hover:border-[#38bdf8]/40 hover:bg-[#38bdf8]/10 transition-all"
+                className="p-2.5 rounded-xl bg-[#090d16] border border-[rgba(255,255,255,0.08)] text-[#94a3b8] hover:text-[#38bdf8] hover:border-[#38bdf8]/40 hover:bg-[#38bdf8]/10 hover:shadow-[0_0_15px_rgba(56,189,248,0.25)] transition-all cursor-pointer"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -120,7 +180,7 @@ export default function Home() {
                 rel="noopener noreferrer"
                 data-cursor="interactive"
                 aria-label="LinkedIn Profile"
-                className="p-2.5 rounded-xl bg-[#090d16] border border-[rgba(255,255,255,0.08)] text-[#94a3b8] hover:text-[#38bdf8] hover:border-[#38bdf8]/40 hover:bg-[#38bdf8]/10 transition-all"
+                className="p-2.5 rounded-xl bg-[#090d16] border border-[rgba(255,255,255,0.08)] text-[#94a3b8] hover:text-[#38bdf8] hover:border-[#38bdf8]/40 hover:bg-[#38bdf8]/10 hover:shadow-[0_0_15px_rgba(56,189,248,0.25)] transition-all cursor-pointer"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -143,7 +203,7 @@ export default function Home() {
                 href="mailto:contact@sre.engineering"
                 data-cursor="interactive"
                 aria-label="Direct Email"
-                className="p-2.5 rounded-xl bg-[#090d16] border border-[rgba(255,255,255,0.08)] text-[#94a3b8] hover:text-[#38bdf8] hover:border-[#38bdf8]/40 hover:bg-[#38bdf8]/10 transition-all"
+                className="p-2.5 rounded-xl bg-[#090d16] border border-[rgba(255,255,255,0.08)] text-[#94a3b8] hover:text-[#38bdf8] hover:border-[#38bdf8]/40 hover:bg-[#38bdf8]/10 hover:shadow-[0_0_15px_rgba(56,189,248,0.25)] transition-all cursor-pointer"
               >
                 <Mail className="w-4 h-4" />
               </a>
@@ -151,7 +211,7 @@ export default function Home() {
                 onClick={handleBackToTop}
                 data-cursor="interactive"
                 aria-label="Back to top"
-                className="p-2.5 rounded-xl bg-[#090d16] border border-[rgba(255,255,255,0.08)] text-[#94a3b8] hover:text-[#38bdf8] hover:border-[#38bdf8]/40 hover:bg-[#38bdf8]/10 transition-all group cursor-pointer"
+                className="p-2.5 rounded-xl bg-[#090d16] border border-[rgba(255,255,255,0.08)] text-[#94a3b8] hover:text-[#38bdf8] hover:border-[#38bdf8]/40 hover:bg-[#38bdf8]/10 hover:shadow-[0_0_15px_rgba(56,189,248,0.25)] transition-all group cursor-pointer"
               >
                 <ArrowUp className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
               </button>
@@ -161,7 +221,7 @@ export default function Home() {
           {/* Bottom Telemetry Status Line */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-[#64748b]">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#090d16] border border-[rgba(255,255,255,0.08)]">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#090d16] border border-[rgba(129,140,248,0.2)] shadow-[0_0_10px_rgba(129,140,248,0.08)]">
                 <StatusDot status="healthy" pulse size="sm" />
                 <span className="text-[#22c55e] font-semibold">SYS STATUS: 100% OPERATIONAL</span>
               </div>

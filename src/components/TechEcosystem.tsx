@@ -74,7 +74,7 @@ export function TechEcosystem() {
   };
 
   return (
-    <section ref={sectionRef} className="py-24 px-6 max-w-7xl mx-auto border-t border-[rgba(255,255,255,0.08)] chapter-proof">
+    <section ref={sectionRef} className="py-24 px-6 max-w-7xl mx-auto chapter-proof">
       <SectionHeader
         label="CONNECTED ECOSYSTEM // TECH STACK"
         title="Interactive Architecture Matrix"
@@ -99,11 +99,11 @@ export function TechEcosystem() {
                   "tech-card p-5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-36 cursor-pointer relative overflow-hidden group",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#090d16]",
                   isActive
-                    ? "bg-[#0f172a] border-[#38bdf8] ring-1 ring-[#38bdf8] shadow-[0_0_25px_rgba(56,189,248,0.25)] scale-[1.02]"
-                    : "bg-[#090d16] border-[rgba(255,255,255,0.08)] hover:border-[#38bdf8]/40 hover:bg-[#0f172a]/70 hover:-translate-y-1"
+                    ? "bg-[#0f172a] border-[#38bdf8] ring-1 ring-[#38bdf8] shadow-[0_0_25px_rgba(56,189,248,0.3),0_0_35px_rgba(129,140,248,0.15)] scale-[1.02]"
+                    : "bg-[#090d16] border-[rgba(255,255,255,0.08)] shadow-[0_2px_12px_rgba(0,0,0,0.4)] hover:border-[#818cf8]/50 hover:bg-[#0f172a]/80 hover:shadow-[0_8px_30px_rgba(0,0,0,0.5),0_0_20px_rgba(129,140,248,0.15)] hover:-translate-y-1"
                 )}
                 style={{
-                  backgroundImage: "radial-gradient(circle 80px at var(--mx, -100px) var(--my, -100px), rgba(56, 189, 248, 0.12), transparent)",
+                  backgroundImage: "radial-gradient(circle 90px at var(--mx, -100px) var(--my, -100px), rgba(129, 140, 248, 0.18), transparent)",
                 }}
               >
                 <div className="flex justify-between items-start">
@@ -121,8 +121,8 @@ export function TechEcosystem() {
           })}
         </div>
 
-        {/* Node Inspector Panel (TECH-03) */}
-        <div className="bg-[#0f172a] border border-[rgba(56,189,248,0.3)] rounded-3xl p-6 sm:p-8 flex flex-col justify-between min-h-[360px] shadow-2xl relative overflow-hidden backdrop-blur-xl">
+        {/* Node Inspector Panel (TECH-03) — Enhanced Frosted Glass with Purple Ambient Accent */}
+        <div className="bg-gradient-to-br from-[#0f172a]/95 via-[#131b2e]/90 to-[#0f172a]/85 border border-[rgba(129,140,248,0.25)] rounded-3xl p-6 sm:p-8 flex flex-col justify-between min-h-[360px] shadow-[0_16px_48px_rgba(0,0,0,0.65),0_0_40px_rgba(129,140,248,0.08)] relative overflow-hidden backdrop-blur-2xl">
           <div ref={inspectorRef}>
             <div className="flex items-center justify-between pb-3 border-b border-[rgba(255,255,255,0.08)] mb-5">
               <div className="flex items-center gap-2">
@@ -141,7 +141,7 @@ export function TechEcosystem() {
             <div className="space-y-4 mb-4">
               <div>
                 <MonoLabel className="text-[#64748b] block mb-1">[ PIPELINE STAGE ]</MonoLabel>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[rgba(56,189,248,0.12)] border border-[rgba(56,189,248,0.3)] text-[#38bdf8] text-xs font-mono font-bold">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[rgba(56,189,248,0.12)] border border-[rgba(56,189,248,0.3)] text-[#38bdf8] text-xs font-mono font-bold shadow-[0_0_12px_rgba(56,189,248,0.15)]">
                   <Layers className="w-3.5 h-3.5" />
                   {activeTech.pipelineStage}
                 </span>
@@ -158,7 +158,7 @@ export function TechEcosystem() {
 
           <div className="pt-4 border-t border-[rgba(255,255,255,0.08)] mt-4 flex items-center justify-between">
             <MonoLabel className="text-[#64748b]">STATUS: INTEGRATED</MonoLabel>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/30">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/30 shadow-[0_0_10px_rgba(34,197,94,0.15)]">
               <StatusDot status="healthy" pulse />
               <MonoLabel className="text-[#22c55e]">NOMINAL</MonoLabel>
             </div>

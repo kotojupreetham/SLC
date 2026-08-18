@@ -67,7 +67,7 @@ export function ProcessTimeline() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-24 px-6 max-w-7xl mx-auto border-t border-[rgba(255,255,255,0.08)] chapter-proof">
+    <section ref={sectionRef} className="py-24 px-6 max-w-7xl mx-auto chapter-proof">
       <SectionHeader
         label="ENGINEERING METHODOLOGY // PROCESS"
         title="How We Build Reliability"
@@ -88,17 +88,17 @@ export function ProcessTimeline() {
         {PROCESS_STEPS.map((s) => (
           <div
             key={s.step}
-            className="process-step-card p-8 rounded-3xl bg-[#0f172a] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(56,189,248,0.35)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.55),0_0_20px_rgba(56,189,248,0.06)] hover:-translate-y-1.5 transition-all duration-300 group flex flex-col justify-between relative overflow-hidden cursor-default"
+            className="process-step-card p-8 rounded-3xl bg-gradient-to-br from-[#0f172a]/95 via-[#131b2e]/90 to-[#0f172a]/85 border border-[rgba(255,255,255,0.08)] shadow-[0_4px_20px_rgba(0,0,0,0.45)] hover:border-[rgba(129,140,248,0.45)] hover:shadow-[0_16px_48px_rgba(0,0,0,0.6),0_0_30px_rgba(129,140,248,0.12),0_0_50px_rgba(168,85,247,0.06)] hover:-translate-y-1.5 transition-all duration-300 group flex flex-col justify-between relative overflow-hidden cursor-default backdrop-blur-xl"
           >
-            {/* Top Accent Gradient Line */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#38bdf8]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            {/* Top Accent Gradient Line — Purple to Cyan */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#818cf8]/60 via-[#38bdf8]/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-[0_0_12px_#818cf8]" />
 
             <div>
               <div className="flex items-center justify-between mb-4">
-                <span className="text-4xl font-mono font-black text-transparent bg-clip-text bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] block group-hover:scale-105 transition-transform duration-200">
+                <span className="text-4xl font-mono font-black text-transparent bg-clip-text bg-gradient-to-r from-[#38bdf8] via-[#818cf8] to-[#a855f7] block group-hover:scale-105 transition-transform duration-200">
                   {s.step}
                 </span>
-                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-[#1e293b] border border-[rgba(255,255,255,0.06)] text-[#64748b] group-hover:text-[#94a3b8] transition-colors">
+                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-[#1e293b] border border-[rgba(129,140,248,0.2)] text-[#a5b4fc] group-hover:text-white transition-colors shadow-[0_0_8px_rgba(129,140,248,0.1)]">
                   {`PHASE ${s.step}`}
                 </span>
               </div>

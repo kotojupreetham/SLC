@@ -45,7 +45,7 @@ function MetricProgressBar({ percent, label }: { percent: number; label: string 
       <div
         ref={barRef}
         aria-label={`${label} progress: ${percent}%`}
-        className="h-full bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] rounded-full shadow-[0_0_10px_rgba(56,189,248,0.5)]"
+        className="h-full bg-gradient-to-r from-[#38bdf8] via-[#818cf8] to-[#a855f7] rounded-full shadow-[0_0_12px_rgba(56,189,248,0.5),0_0_8px_rgba(168,85,247,0.3)]"
         style={{ width: "0%" }}
       />
     </div>
@@ -102,7 +102,7 @@ export function ControlRoom() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-24 px-6 max-w-7xl mx-auto border-t border-[rgba(255,255,255,0.08)] chapter-confidence">
+    <section ref={sectionRef} className="py-24 px-6 max-w-7xl mx-auto chapter-confidence">
       <SectionHeader
         label="SYSTEM TELEMETRY // CONTROL ROOM"
         title="Engineering Control Room"
@@ -111,10 +111,10 @@ export function ControlRoom() {
 
       <div
         ref={consoleCardRef}
-        className="bg-[#0f172a] border border-[rgba(56,189,248,0.3)] rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl relative"
+        className="bg-[#0f172a]/95 border border-[rgba(129,140,248,0.3)] rounded-3xl overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.65),0_0_40px_rgba(129,140,248,0.1),0_0_80px_rgba(168,85,247,0.05)] backdrop-blur-2xl relative"
       >
         {/* Header bar */}
-        <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] bg-[#090d16]/80 flex flex-wrap items-center justify-between gap-4">
+        <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] bg-[#090d16]/90 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex gap-1.5">
               <span className="w-3 h-3 rounded-full bg-[#ef4444]/80 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
@@ -128,13 +128,13 @@ export function ControlRoom() {
             {/* TELE-03: Sheen Badge */}
             <span
               ref={sheenBadgeRef}
-              className="relative overflow-hidden px-3 py-1 rounded-full bg-[#38bdf8]/10 border border-[#38bdf8]/30 text-[10px] font-mono text-[#7dd3fc]"
+              className="relative overflow-hidden px-3 py-1 rounded-full bg-[#818cf8]/10 border border-[#818cf8]/35 text-[10px] font-mono text-[#c4b5fd] shadow-[0_0_12px_rgba(129,140,248,0.15)]"
             >
               <span className="relative z-10">SAMPLE TELEMETRY PREVIEW</span>
-              <span className="sheen-layer absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+              <span className="sheen-layer absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
             </span>
 
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/30">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/30 shadow-[0_0_10px_rgba(34,197,94,0.15)]">
               <StatusDot status="healthy" pulse size="md" />
               <MonoLabel className="text-[#22c55e]">ALL SYSTEMS NOMINAL</MonoLabel>
             </div>
@@ -146,10 +146,12 @@ export function ControlRoom() {
           {topMetrics.map((metric) => (
             <div
               key={metric.id}
-              className="bg-[#0f172a] p-6 flex flex-col items-center text-center gap-2 hover:bg-[#131d35] transition-colors cursor-default"
+              className="bg-[#0f172a] p-6 flex flex-col items-center text-center gap-2 hover:bg-[#141e36] transition-colors cursor-default group"
             >
-              <MonoLabel className="text-[#64748b] uppercase tracking-wider">{metric.label}</MonoLabel>
-              <span className="text-2xl sm:text-3xl font-mono font-black text-white tracking-tight">
+              <MonoLabel className="text-[#64748b] uppercase tracking-wider group-hover:text-[#94a3b8] transition-colors">
+                {metric.label}
+              </MonoLabel>
+              <span className="text-2xl sm:text-3xl font-mono font-black text-white tracking-tight group-hover:text-[#38bdf8] transition-colors">
                 {metric.value}
               </span>
               <div className="mt-1">
@@ -160,7 +162,7 @@ export function ControlRoom() {
         </div>
 
         {/* Progress bar metrics (TELE-02) */}
-        <div className="p-6 sm:p-8 space-y-6 bg-[#090d16]/50">
+        <div className="p-6 sm:p-8 space-y-6 bg-[#090d16]/60">
           {barMetrics.map((metric) => (
             <div key={metric.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
               <MonoLabel className="text-[#94a3b8] sm:w-44 shrink-0">{metric.label}</MonoLabel>

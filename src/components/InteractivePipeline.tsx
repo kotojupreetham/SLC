@@ -36,14 +36,14 @@ const STAGE_ICONS = [
 ];
 
 const WEDGE_COLORS = [
-  { main: "#0284c7", glow: "rgba(2, 132, 199, 0.45)", text: "#7dd3fc" },
-  { main: "#2563eb", glow: "rgba(37, 99, 235, 0.45)", text: "#93c5fd" },
-  { main: "#4f46e5", glow: "rgba(79, 70, 229, 0.45)", text: "#a5b4fc" },
-  { main: "#7c3aed", glow: "rgba(124, 58, 237, 0.45)", text: "#c4b5fd" },
-  { main: "#db2777", glow: "rgba(219, 39, 119, 0.45)", text: "#fbcfe8" },
-  { main: "#059669", glow: "rgba(5, 150, 105, 0.45)", text: "#6ee7b7" },
-  { main: "#d97706", glow: "rgba(217, 119, 6, 0.45)", text: "#fde68a" },
-  { main: "#0891b2", glow: "rgba(8, 145, 178, 0.45)", text: "#67e8f9" },
+  { main: "#0284c7", glow: "rgba(2, 132, 199, 0.55)", text: "#7dd3fc" },
+  { main: "#2563eb", glow: "rgba(37, 99, 235, 0.55)", text: "#93c5fd" },
+  { main: "#4f46e5", glow: "rgba(79, 70, 229, 0.55)", text: "#a5b4fc" },
+  { main: "#7c3aed", glow: "rgba(124, 58, 237, 0.55)", text: "#c4b5fd" },
+  { main: "#db2777", glow: "rgba(219, 39, 119, 0.55)", text: "#fbcfe8" },
+  { main: "#059669", glow: "rgba(5, 150, 105, 0.55)", text: "#6ee7b7" },
+  { main: "#d97706", glow: "rgba(217, 119, 6, 0.55)", text: "#fde68a" },
+  { main: "#0891b2", glow: "rgba(8, 145, 178, 0.55)", text: "#67e8f9" },
 ];
 
 // Inner radius 320, outer radius 560 with exact 45-degree wedge bounds
@@ -96,11 +96,11 @@ function PipelineDial({
         onActivate();
       }}
     >
-      {/* Outer halo glow ring */}
+      {/* Outer halo glow ring — with dual purple/cyan ambient glow */}
       <div
-        className="absolute inset-0 rounded-full border border-[rgba(56,189,248,0.25)] pointer-events-none transition-all duration-700"
+        className="absolute inset-0 rounded-full border border-[rgba(129,140,248,0.3)] pointer-events-none transition-all duration-700"
         style={{
-          boxShadow: `0 0 70px ${activeColor.glow}, inset 0 0 40px rgba(56,189,248,0.08)`,
+          boxShadow: `0 0 80px ${activeColor.glow}, 0 0 40px rgba(168,85,247,0.2), inset 0 0 50px rgba(56,189,248,0.1)`,
         }}
       />
 
@@ -121,9 +121,9 @@ function PipelineDial({
             x2="100%"
             y2="100%"
           >
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.85" />
-            <stop offset="50%" stopColor="#60a5fa" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#818cf8" stopOpacity="0.85" />
+            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.9" />
+            <stop offset="50%" stopColor="#818cf8" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#a855f7" stopOpacity="0.9" />
           </linearGradient>
 
           <filter id={filterId} x="-20%" y="-20%" width="140%" height="140%">
@@ -132,14 +132,14 @@ function PipelineDial({
           </filter>
         </defs>
 
-        {/* Outer rim */}
+        {/* Outer rim with neon gradient */}
         <circle
           cx="700"
           cy="700"
           r="660"
           fill="none"
           stroke={`url(#${gradientId})`}
-          strokeWidth="2.5"
+          strokeWidth="3"
         />
 
         {/* Inner guide dashed circle */}
@@ -148,7 +148,7 @@ function PipelineDial({
           cy="700"
           r="320"
           fill="none"
-          stroke="rgba(255,255,255,0.1)"
+          stroke="rgba(129,140,248,0.2)"
           strokeWidth="1.5"
           strokeDasharray="6 6"
         />
@@ -169,10 +169,10 @@ function PipelineDial({
             >
               <path
                 d={PREVIEW_WEDGE_PATH}
-                fill={isHighlighted ? color.main : "rgba(15, 23, 42, 0.75)"}
-                fillOpacity={isHighlighted ? 0.95 : 0.45}
-                stroke={isHighlighted ? "#ffffff" : "rgba(255, 255, 255, 0.12)"}
-                strokeWidth={isHighlighted ? "3.5" : "1.2"}
+                fill={isHighlighted ? color.main : "rgba(19, 27, 46, 0.85)"}
+                fillOpacity={isHighlighted ? 0.95 : 0.65}
+                stroke={isHighlighted ? "#ffffff" : "rgba(129, 140, 248, 0.25)"}
+                strokeWidth={isHighlighted ? "3.5" : "1.5"}
                 filter={isHighlighted ? `url(#${filterId})` : undefined}
                 style={{
                   transition: "fill 0.4s ease, fill-opacity 0.4s ease, stroke 0.4s ease",
@@ -202,9 +202,9 @@ function PipelineDial({
               <circle
                 cx="700"
                 cy="325"
-                r={isHighlighted ? 7 : 4}
+                r={isHighlighted ? 7 : 4.5}
                 fill={isHighlighted ? "#ffffff" : color.text}
-                fillOpacity={isHighlighted ? 1 : 0.4}
+                fillOpacity={isHighlighted ? 1 : 0.6}
                 style={{ transition: "r 0.4s ease, fill-opacity 0.4s ease" }}
               />
             </g>
@@ -215,12 +215,12 @@ function PipelineDial({
       {/* Center status core */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div
-          className={`flex flex-col items-center text-center rounded-full bg-[#0f172a]/90 backdrop-blur-xl border transition-all duration-500 shadow-2xl ${
+          className={`flex flex-col items-center text-center rounded-full bg-[#0f172a]/95 backdrop-blur-2xl border transition-all duration-500 shadow-2xl ${
             compact ? "p-3" : "p-4 sm:p-5"
           }`}
           style={{
-            borderColor: `${activeColor.main}60`,
-            boxShadow: `0 0 30px ${activeColor.glow}, inset 0 0 20px rgba(0,0,0,0.6)`,
+            borderColor: `${activeColor.main}70`,
+            boxShadow: `0 0 35px ${activeColor.glow}, 0 0 20px rgba(168,85,247,0.2), inset 0 0 20px rgba(0,0,0,0.7)`,
           }}
         >
           <div
@@ -246,7 +246,7 @@ function PipelineDial({
             {`0${activeIndex + 1} // ${activeStage.id.toUpperCase()}`}
           </span>
           {!compact && (
-            <span className="text-[9px] font-mono text-[#64748b] tracking-wider uppercase flex items-center gap-1 mt-0.5">
+            <span className="text-[9px] font-mono text-[#818cf8] tracking-wider uppercase flex items-center gap-1 mt-0.5">
               <Sparkles className="w-2.5 h-2.5 text-[#38bdf8] animate-pulse" />
               CLICK TO EXPLORE
             </span>
@@ -263,6 +263,7 @@ export function InteractivePipeline() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const heroSectionRef = useRef<HTMLElement>(null);
+  const cardContainerRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const badgeRef = useRef<HTMLDivElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
@@ -281,7 +282,7 @@ export function InteractivePipeline() {
     return () => clearInterval(interval);
   }, [hoveredIndex]);
 
-  // Master Hero Entrance Animation (HERO-01, HERO-05, HERO-06, HERO-07)
+  // Master Hero Entrance Animation
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -316,7 +317,7 @@ export function InteractivePipeline() {
           0.1
         );
 
-      // HERO-07: Continuous down arrow yoyo bob
+      // Continuous down arrow yoyo bob
       if (arrowCueRef.current) {
         const arrow = arrowCueRef.current.querySelector(".arrow-icon");
         if (arrow) {
@@ -343,10 +344,11 @@ export function InteractivePipeline() {
         id="pipeline"
         className="relative w-full overflow-x-clip bg-[#030712] text-white chapter-signal"
       >
-        {/* Ambient Glow Orbs */}
+        {/* Ambient Glow Orbs — with dominant Purple Glow */}
         <div className="ambient-orb orb-1" />
         <div className="ambient-orb orb-2" />
         <div className="ambient-orb orb-3" />
+        <div className="ambient-orb orb-purple" />
 
         {/* Hero Section Container */}
         <div className="relative min-h-[90vh] lg:min-h-screen w-full flex flex-col justify-center overflow-hidden pt-28 pb-16 lg:py-0">
@@ -354,7 +356,10 @@ export function InteractivePipeline() {
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
 
           {/* ═══ HERO CONTENT ═══ */}
-          <div className="relative z-20 w-full max-w-2xl px-6 sm:px-10 lg:absolute lg:left-12 lg:px-0 xl:left-20">
+          <div
+            ref={cardContainerRef}
+            className="relative z-20 w-full max-w-2xl px-6 sm:px-10 lg:absolute lg:left-12 lg:px-0 xl:left-20"
+          >
             {/* Badge */}
             <div ref={badgeRef} className="mb-6">
               <GlowBadge>
@@ -390,7 +395,7 @@ export function InteractivePipeline() {
                 ref={ctaBtnRef}
                 onClick={() => setIsExplorerOpen(true)}
                 data-cursor="cta"
-                className="hidden md:inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase shadow-[0_0_30px_rgba(56,189,248,0.5)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:outline-none group hover:opacity-95"
+                className="hidden md:inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase shadow-[0_0_30px_rgba(56,189,248,0.5),0_0_20px_rgba(168,85,247,0.3)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:outline-none group hover:opacity-95 hover:scale-[1.02] transition-all"
               >
                 <MousePointerClick className="w-4 h-4 transition-transform group-hover:scale-110" />
                 EXPLORE PIPELINES
@@ -477,7 +482,7 @@ export function InteractivePipeline() {
             </div>
           </div>
 
-          {/* ═══ TABLET & DESKTOP: Interactive Continuous Lifecycle Wheel (HERO-01, HERO-04) ═══ */}
+          {/* ═══ TABLET & DESKTOP: Interactive Continuous Lifecycle Wheel ═══ */}
           <div
             className="hidden md:block mt-10 h-[min(52vw,390px)] w-[min(52vw,390px)] self-center z-10 lg:absolute lg:right-6 lg:top-1/2 lg:mt-0 lg:h-[390px] lg:w-[390px] lg:-translate-y-1/2 xl:right-16 xl:h-[460px] xl:w-[460px]"
           >

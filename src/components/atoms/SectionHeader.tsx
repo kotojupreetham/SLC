@@ -1,14 +1,14 @@
+"use client";
+
 import React from "react";
 import { StatusDot } from "./StatusDot";
 import { MonoLabel } from "./MonoLabel";
-import { ScrollReveal } from "@/components/interaction/ScrollReveal";
-import { cn } from "@/lib/cn";
+import { ScrollReveal } from "../interaction/ScrollReveal";
 
 interface SectionHeaderProps {
   label: string;
   title: string;
   description?: string;
-  align?: "left" | "center";
   className?: string;
 }
 
@@ -16,40 +16,29 @@ export function SectionHeader({
   label,
   title,
   description,
-  align = "left",
-  className,
+  className = "",
 }: SectionHeaderProps) {
   return (
-    <ScrollReveal
-      direction="up"
-      className={cn(
-        "mb-12 md:mb-16",
-        align === "center" && "text-center mx-auto max-w-3xl",
-        className
-      )}
-    >
-      <div
-        className={cn(
-          "inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full bg-[rgba(56,189,248,0.06)] border border-[rgba(56,189,248,0.18)] backdrop-blur-sm",
-          align === "center" && "justify-center"
+    <div className={`mb-16 text-center max-w-3xl mx-auto ${className}`}>
+      <ScrollReveal direction="up">
+        {/* Pill Badge with Ambient Glow */}
+        <div className="inline-flex items-center gap-2 mb-4 px-3.5 py-1.5 rounded-full bg-[#0f172a]/80 border border-[rgba(129,140,248,0.25)] shadow-[0_0_20px_rgba(129,140,248,0.12),0_0_10px_rgba(56,189,248,0.08)] backdrop-blur-md">
+          <StatusDot status="accent" pulse />
+          <MonoLabel className="text-[#38bdf8] font-semibold text-xs tracking-wider">{label}</MonoLabel>
+        </div>
+
+        {/* Gradient Title */}
+        <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight">
+          {title}
+        </h2>
+
+        {/* Subtitle / Description */}
+        {description && (
+          <p className="text-[#94a3b8] text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
+            {description}
+          </p>
         )}
-      >
-        <StatusDot status="accent" pulse />
-        <MonoLabel className="text-[#38bdf8] font-semibold">{label}</MonoLabel>
-      </div>
-      <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
-        {title}
-      </h2>
-      {description && (
-        <p
-          className={cn(
-            "text-[#94a3b8] mt-3 text-sm md:text-base leading-relaxed",
-            align === "center" ? "mx-auto max-w-2xl" : "max-w-2xl"
-          )}
-        >
-          {description}
-        </p>
-      )}
-    </ScrollReveal>
+      </ScrollReveal>
+    </div>
   );
 }

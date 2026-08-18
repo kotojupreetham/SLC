@@ -83,7 +83,7 @@ export function EngineeringDashboard() {
   }, [selectedId]);
 
   return (
-    <section ref={sectionRef} className="py-24 px-6 max-w-7xl mx-auto">
+    <section ref={sectionRef} className="py-24 px-6 max-w-7xl mx-auto border-t border-[rgba(255,255,255,0.08)] chapter-proof">
       <SectionHeader
         label="SYSTEM CAPABILITIES // SERVICES"
         title="Engineering Control Console"
@@ -116,13 +116,13 @@ export function EngineeringDashboard() {
                     "module-row p-5 rounded-2xl border text-left transition-all duration-200 flex items-center justify-between relative overflow-hidden group",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] cursor-pointer",
                     isSelected
-                      ? "bg-[#0f172a] border-[#38bdf8] shadow-[0_0_25px_rgba(56,189,248,0.22)] scale-[1.01]"
-                      : "bg-[#030712]/80 border-[rgba(255,255,255,0.08)] hover:border-[#38bdf8]/40 hover:bg-[#0f172a]/60 hover:translate-x-1"
+                      ? "bg-[#0f172a] border-[#38bdf8] shadow-[0_0_25px_rgba(56,189,248,0.22),0_0_35px_rgba(129,140,248,0.12)] scale-[1.01]"
+                      : "bg-[#030712]/80 border-[rgba(255,255,255,0.08)] shadow-[0_2px_12px_rgba(0,0,0,0.4)] hover:border-[#818cf8]/50 hover:bg-[#0f172a]/80 hover:shadow-[0_8px_30px_rgba(0,0,0,0.5),0_0_20px_rgba(129,140,248,0.12)] hover:translate-x-1"
                   )}
                 >
                   {/* Active Indicator Strip */}
                   {isSelected && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#38bdf8] to-[#818cf8] shadow-[0_0_12px_#38bdf8]" />
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#38bdf8] via-[#60a5fa] to-[#818cf8] shadow-[0_0_12px_#38bdf8]" />
                   )}
 
                   <div className="flex items-center gap-3.5">
@@ -154,7 +154,7 @@ export function EngineeringDashboard() {
                       className={cn(
                         "text-[10px] font-mono px-3 py-1 rounded-full uppercase tracking-wider hidden sm:inline-block transition-colors",
                         isSelected
-                          ? "bg-[rgba(56,189,248,0.15)] text-[#38bdf8] border border-[rgba(56,189,248,0.3)]"
+                          ? "bg-[rgba(56,189,248,0.15)] text-[#38bdf8] border border-[rgba(56,189,248,0.3)] shadow-[0_0_10px_rgba(56,189,248,0.2)]"
                           : "bg-[#1e293b]/70 border border-[rgba(255,255,255,0.06)] text-[#94a3b8]"
                       )}
                     >
@@ -173,8 +173,8 @@ export function EngineeringDashboard() {
           </div>
         </div>
 
-        {/* Detail Panel (CAP-02, CAP-03, CAP-04) */}
-        <div className="lg:col-span-7 glass-panel rounded-3xl p-8 md:p-10 flex flex-col justify-between relative overflow-hidden border border-[rgba(255,255,255,0.1)] shadow-2xl">
+        {/* Detail Panel (CAP-02, CAP-03, CAP-04) — Frosted Glass Console with Neon Border */}
+        <div className="lg:col-span-7 glass-panel rounded-3xl p-8 md:p-10 flex flex-col justify-between relative overflow-hidden bg-gradient-to-br from-[#0f172a]/95 via-[#131b2e]/90 to-[#0f172a]/80 backdrop-blur-2xl border border-[rgba(129,140,248,0.22)] shadow-[0_16px_48px_rgba(0,0,0,0.65),0_0_40px_rgba(129,140,248,0.08),inset_0_1px_0_rgba(255,255,255,0.06)]">
           <div
             ref={detailPanelRef}
             id={`panel-${active.id}`}
@@ -191,7 +191,7 @@ export function EngineeringDashboard() {
             </div>
 
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-3.5 rounded-2xl bg-[#38bdf8]/15 border border-[#38bdf8]/40 text-[#38bdf8] shadow-[0_0_20px_rgba(56,189,248,0.25)]">
+              <div className="p-3.5 rounded-2xl bg-[#38bdf8]/15 border border-[#38bdf8]/40 text-[#38bdf8] shadow-[0_0_20px_rgba(56,189,248,0.25),0_0_30px_rgba(129,140,248,0.15)]">
                 <ActiveServiceIcon className="w-7 h-7" />
               </div>
               <h3 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
@@ -208,7 +208,7 @@ export function EngineeringDashboard() {
               {active.metrics.map((metric, i) => (
                 <div
                   key={i}
-                  className="p-4 rounded-2xl bg-[#030712]/70 border border-[rgba(255,255,255,0.08)] shadow-inner transition-all hover:border-[#38bdf8]/35 hover:bg-[#030712]"
+                  className="p-4 rounded-2xl bg-[#030712]/70 border border-[rgba(255,255,255,0.08)] shadow-inner transition-all hover:border-[#818cf8]/45 hover:shadow-[0_0_20px_rgba(129,140,248,0.12)] hover:bg-[#030712]"
                 >
                   <span className="text-xs font-mono text-[#64748b] block mb-1 uppercase tracking-wider">
                     {metric.label}
@@ -229,7 +229,7 @@ export function EngineeringDashboard() {
                 <span
                   key={i}
                   data-cursor="interactive"
-                  className="tech-chip px-3.5 py-1.5 rounded-xl bg-[#1e293b]/80 border border-[#334155] text-xs font-mono text-[#cbd5e1] shadow-sm hover:border-[#38bdf8]/50 hover:text-white transition-all duration-200 cursor-default"
+                  className="tech-chip px-3.5 py-1.5 rounded-xl bg-[#1e293b]/80 border border-[#334155] text-xs font-mono text-[#cbd5e1] shadow-sm hover:border-[#38bdf8]/50 hover:text-white hover:shadow-[0_0_12px_rgba(56,189,248,0.2)] transition-all duration-200 cursor-default"
                 >
                   {tag}
                 </span>
