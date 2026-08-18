@@ -56,16 +56,40 @@ export function BackgroundCanvas() {
     const initParticles = () => {
       particles = [];
       // Recompute particleCount with sensible limits to bound CPU usage
-      const computedCount = Math.min(52, Math.max(12, Math.floor((window.innerWidth * window.innerHeight) / 50000)));
+      // Adjust count based on device capabilities to keep low-end devices smooth
+      let baseCount = Math.floor((window.innerWidth * window.innerHeight) / 50000);
+      baseCount = Math.max(6, baseCount);
+
+      // Perf heuristics
+      let perfMultiplier = 1;
+      try {
+        // deviceMemory (GB) and hardwareConcurrency (logical cores) are good heuristics
+        // Lower resource devices get a reduced multiplier
+        const mem = (navigator as any).deviceMemory || 8;
+        const cores = navigator.hardwareConcurrency || 4;
+        if (mem <= 2) perfMultiplier *= 0.45;
+        else if (mem <= 4) perfMultiplier *= 0.7;
+        if (cores <= 2) perfMultiplier *= 0.6;
+        else if (cores <= 4) perfMultiplier *= 0.8;
+      } catch (e) {
+        // ignore if APIs not available
+      }
+
+      // Reduce density further on very small viewports (mobile)
+      const viewportArea = window.innerWidth * window.innerHeight;
+      if (viewportArea < 360 * 640) perfMultiplier *= 0.6;
+
+      const computedCount = Math.min(48, Math.max(6, Math.floor(baseCount * perfMultiplier)));
+
       for (let i = 0; i < computedCount; i++) {
-        const radius = Math.random() * 2.0 + 1.2;
-        const alpha = Math.random() * 0.4 + 0.15;
+        const radius = Math.random() * 2.0 + 1.0;
+        const alpha = Math.random() * 0.3 + 0.12;
         const pair = colorPairs[Math.floor(Math.random() * colorPairs.length)];
         particles.push({
           x: Math.random() * (canvas.width / (window.devicePixelRatio || 1)),
           y: Math.random() * (canvas.height / (window.devicePixelRatio || 1)),
-          vx: (Math.random() - 0.5) * 0.28,
-          vy: (Math.random() - 0.5) * 0.28,
+          vx: (Math.random() - 0.5) * 0.22,
+          vy: (Math.random() - 0.5) * 0.22,
           radius,
           colorDark: pair.dark,
           colorLight: pair.light,
