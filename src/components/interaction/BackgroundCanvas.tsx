@@ -9,7 +9,8 @@ interface TelemetryParticle {
   vx: number;
   vy: number;
   radius: number;
-  color: string;
+  colorDark: string;
+  colorLight: string;
   originalAlpha: number;
   alpha: number;
 }
@@ -35,11 +36,11 @@ export function BackgroundCanvas() {
       Math.floor((window.innerWidth * window.innerHeight) / 32000)
     );
 
-    // SRE Telemetry Palette (Cyan, Indigo, Emerald)
-    const colors = [
-      "rgba(56, 189, 248, ", // Cyan
-      "rgba(129, 140, 248, ", // Indigo
-      "rgba(34, 197, 94, ", // Emerald
+    // Color maps for Dark and Light themes
+    const colorPairs = [
+      { dark: "rgba(56, 189, 248, ", light: "rgba(37, 99, 235, " }, // Cyan / Blue
+      { dark: "rgba(129, 140, 248, ", light: "rgba(124, 58, 237, " }, // Indigo / Violet
+      { dark: "rgba(34, 197, 94, ", light: "rgba(22, 163, 74, " }, // Emerald / Green
     ];
 
     const resizeCanvas = () => {
@@ -53,22 +54,33 @@ export function BackgroundCanvas() {
       for (let i = 0; i < particleCount; i++) {
         const radius = Math.random() * 1.8 + 1.2;
         const alpha = Math.random() * 0.35 + 0.15;
+        const pair = colorPairs[Math.floor(Math.random() * colorPairs.length)];
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
           vx: (Math.random() - 0.5) * 0.25,
           vy: (Math.random() - 0.5) * 0.25,
           radius,
-          color: colors[Math.floor(Math.random() * colors.length)],
+          colorDark: pair.dark,
+          colorLight: pair.light,
           originalAlpha: alpha,
           alpha,
         });
       }
     };
 
-    const drawGrid = () => {
+    const drawParticles = () => {
       if (!ctx || !canvas) return;
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.012)";
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const isLightMode = document.documentElement.classList.contains("light");
+
+      // Draw background base matching theme
+      ctx.fillStyle = isLightMode ? "#f7f8fa" : "#030712";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw faint engineering grid
+      ctx.strokeStyle = isLightMode ? "rgba(0, 0, 0, 0.025)" : "rgba(255, 255, 255, 0.012)";
       ctx.lineWidth = 1;
       const gridSize = 80;
 
@@ -85,18 +97,6 @@ export function BackgroundCanvas() {
         ctx.lineTo(canvas.width, y);
         ctx.stroke();
       }
-    };
-
-    const drawParticles = () => {
-      if (!ctx || !canvas) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw dark background base
-      ctx.fillStyle = "#030712";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw faint engineering grid
-      drawGrid();
 
       // Smooth mouse follow interpolation
       const mouse = mouseRef.current;
@@ -113,9 +113,15 @@ export function BackgroundCanvas() {
           mouse.ry,
           400
         );
-        gradient.addColorStop(0, "rgba(56, 189, 248, 0.04)");
-        gradient.addColorStop(0.5, "rgba(129, 140, 248, 0.015)");
-        gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+        if (isLightMode) {
+          gradient.addColorStop(0, "rgba(37, 99, 235, 0.035)");
+          gradient.addColorStop(0.5, "rgba(124, 58, 237, 0.015)");
+          gradient.addColorStop(1, "rgba(247, 248, 250, 0)");
+        } else {
+          gradient.addColorStop(0, "rgba(56, 189, 248, 0.04)");
+          gradient.addColorStop(0.5, "rgba(129, 140, 248, 0.015)");
+          gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+        }
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
@@ -147,9 +153,10 @@ export function BackgroundCanvas() {
         }
 
         // Draw particle dot
+        const particleColorPrefix = isLightMode ? p.colorLight : p.colorDark;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `${p.color}${p.alpha})`;
+        ctx.fillStyle = `${particleColorPrefix}${p.alpha})`;
         ctx.fill();
 
         // Draw connecting constellation lines
@@ -161,11 +168,13 @@ export function BackgroundCanvas() {
 
           if (dist < 110) {
             const lineAlpha =
-              (1 - dist / 110) * 0.1 * Math.min(p.alpha, p2.alpha);
+              (1 - dist / 110) * 0.12 * Math.min(p.alpha, p2.alpha);
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(56, 189, 248, ${lineAlpha})`;
+            ctx.strokeStyle = isLightMode
+              ? `rgba(37, 99, 235, ${lineAlpha})`
+              : `rgba(56, 189, 248, ${lineAlpha})`;
             ctx.lineWidth = 0.8;
             ctx.stroke();
           }
@@ -209,7 +218,7 @@ export function BackgroundCanvas() {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="fixed inset-0 w-full h-full -z-10 pointer-events-none bg-[#030712]"
+      className="fixed inset-0 w-full h-full -z-10 pointer-events-none transition-colors duration-300"
     />
   );
 }
