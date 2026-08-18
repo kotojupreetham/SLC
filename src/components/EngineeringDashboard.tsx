@@ -1,22 +1,89 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SERVICES } from "@/data/services";
 import { SectionHeader } from "./atoms/SectionHeader";
 import { StatusDot } from "./atoms/StatusDot";
 import { MonoLabel } from "./atoms/MonoLabel";
-import { ScrollReveal } from "./interaction/ScrollReveal";
 import { cn } from "@/lib/cn";
 import { ArrowRight } from "lucide-react";
 import { getServiceIcon } from "@/lib/icons";
+import { isReducedMotion } from "@/lib/gsapHelpers";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 export function EngineeringDashboard() {
   const [selectedId, setSelectedId] = useState(SERVICES[0].id);
+  const sectionRef = useRef<HTMLElement>(null);
+  const rowsListRef = useRef<HTMLDivElement>(null);
+  const detailPanelRef = useRef<HTMLDivElement>(null);
+  const chipsContainerRef = useRef<HTMLDivElement>(null);
+
   const active = SERVICES.find((s) => s.id === selectedId) || SERVICES[0];
   const ActiveServiceIcon = getServiceIcon(active.id);
 
+  // CAP-01: Row entrance stagger
+  useEffect(() => {
+    if (typeof window === "undefined" || !rowsListRef.current) return;
+
+    const ctx = gsap.context(() => {
+      const rows = rowsListRef.current?.querySelectorAll(".module-row");
+      if (!rows || rows.length === 0) return;
+
+      if (isReducedMotion()) {
+        gsap.set(rows, { opacity: 1, y: 0 });
+        return;
+      }
+
+      gsap.from(rows, {
+        y: 20,
+        opacity: 0,
+        duration: 0.45,
+        stagger: 0.06,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: rowsListRef.current,
+          start: "top 80%",
+          once: true,
+        },
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  // CAP-02 & CAP-04: Crossfade & Chip stagger on detail selection
+  useEffect(() => {
+    if (typeof window === "undefined" || !detailPanelRef.current) return;
+
+    if (isReducedMotion()) return;
+
+    // Crossfade detail panel
+    gsap.fromTo(
+      detailPanelRef.current,
+      { opacity: 0.7, y: 8 },
+      { opacity: 1, y: 0, duration: 0.3, ease: "power2.out", overwrite: "auto" }
+    );
+
+    // CAP-04: Chip stagger
+    if (chipsContainerRef.current) {
+      const chips = chipsContainerRef.current.querySelectorAll(".tech-chip");
+      if (chips.length > 0) {
+        gsap.fromTo(
+          chips,
+          { opacity: 0, y: 8 },
+          { opacity: 1, y: 0, duration: 0.3, stagger: 0.05, ease: "power1.out" }
+        );
+      }
+    }
+  }, [selectedId]);
+
   return (
-    <section className="py-24 px-6 max-w-7xl mx-auto">
+    <section ref={sectionRef} className="py-24 px-6 max-w-7xl mx-auto">
       <SectionHeader
         label="SYSTEM CAPABILITIES // SERVICES"
         title="Engineering Control Console"
@@ -24,14 +91,15 @@ export function EngineeringDashboard() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        {/* Module List */}
-        <ScrollReveal
-          direction="left"
-          className="lg:col-span-5 flex flex-col gap-3"
-          as="div"
-        >
-          <div role="tablist" aria-label="Engineering Capabilities" className="flex flex-col gap-3">
-            {SERVICES.map((service, index) => {
+        {/* Module List (CAP-01) */}
+        <div className="lg:col-span-5 flex flex-col gap-3">
+          <div
+            ref={rowsListRef}
+            role="tablist"
+            aria-label="Engineering Capabilities"
+            className="flex flex-col gap-3"
+          >
+            {SERVICES.map((service) => {
               const isSelected = service.id === selectedId;
               const ServiceIcon = getServiceIcon(service.id);
 
@@ -44,11 +112,8 @@ export function EngineeringDashboard() {
                   aria-controls={`panel-${service.id}`}
                   onClick={() => setSelectedId(service.id)}
                   data-cursor="interactive"
-                  style={{
-                    transitionDelay: `${index * 40}ms`,
-                  }}
                   className={cn(
-                    "p-5 rounded-2xl border text-left transition-all duration-240 flex items-center justify-between relative overflow-hidden group",
+                    "module-row p-5 rounded-2xl border text-left transition-all duration-200 flex items-center justify-between relative overflow-hidden group",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] cursor-pointer",
                     isSelected
                       ? "bg-[#0f172a] border-[#38bdf8] shadow-[0_0_25px_rgba(56,189,248,0.22)] scale-[1.01]"
@@ -106,20 +171,16 @@ export function EngineeringDashboard() {
               );
             })}
           </div>
-        </ScrollReveal>
+        </div>
 
-        {/* Detail Panel */}
-        <ScrollReveal
-          direction="right"
-          className="lg:col-span-7 glass-panel rounded-3xl p-8 md:p-10 flex flex-col justify-between relative overflow-hidden border border-[rgba(255,255,255,0.1)] shadow-2xl"
-          as="div"
-        >
+        {/* Detail Panel (CAP-02, CAP-03, CAP-04) */}
+        <div className="lg:col-span-7 glass-panel rounded-3xl p-8 md:p-10 flex flex-col justify-between relative overflow-hidden border border-[rgba(255,255,255,0.1)] shadow-2xl">
           <div
+            ref={detailPanelRef}
             id={`panel-${active.id}`}
             role="tabpanel"
             aria-labelledby={`tab-${active.id}`}
-            key={active.id}
-            className="relative z-10 transition-all duration-280 animate-in fade-in slide-in-from-right-3"
+            className="relative z-10"
           >
             <div className="flex justify-between items-center pb-4 border-b border-[rgba(255,255,255,0.08)] mb-6">
               <MonoLabel className="text-[#38bdf8]">{`${active.code} // TELEMETRY DETAIL`}</MonoLabel>
@@ -142,6 +203,7 @@ export function EngineeringDashboard() {
               {active.description}
             </p>
 
+            {/* Stat Tiles (CAP-03) */}
             <div className="grid grid-cols-2 gap-4 mb-8">
               {active.metrics.map((metric, i) => (
                 <div
@@ -159,21 +221,22 @@ export function EngineeringDashboard() {
             </div>
           </div>
 
+          {/* Integrated Technology Chips (CAP-04) */}
           <div className="relative z-10 pt-4 border-t border-[rgba(255,255,255,0.08)]">
             <MonoLabel className="block mb-3 text-[#64748b]">INTEGRATED TECHNOLOGIES</MonoLabel>
-            <div className="flex flex-wrap gap-2">
+            <div ref={chipsContainerRef} className="flex flex-wrap gap-2">
               {active.tags.map((tag, i) => (
                 <span
                   key={i}
                   data-cursor="interactive"
-                  className="px-3.5 py-1.5 rounded-xl bg-[#1e293b]/80 border border-[#334155] text-xs font-mono text-[#cbd5e1] shadow-sm hover:border-[#38bdf8]/50 hover:text-white transition-all duration-200 cursor-default"
+                  className="tech-chip px-3.5 py-1.5 rounded-xl bg-[#1e293b]/80 border border-[#334155] text-xs font-mono text-[#cbd5e1] shadow-sm hover:border-[#38bdf8]/50 hover:text-white transition-all duration-200 cursor-default"
                 >
                   {tag}
                 </span>
               ))}
             </div>
           </div>
-        </ScrollReveal>
+        </div>
       </div>
     </section>
   );

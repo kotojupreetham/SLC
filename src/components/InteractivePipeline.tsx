@@ -1,12 +1,15 @@
 "use client";
 
-import React, { useEffect, useId, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { PIPELINE_STAGES } from "@/data/pipelineStages";
 import { MonoLabel } from "./atoms/MonoLabel";
 import { GlowBadge } from "./atoms/GlowBadge";
 import { SITE_CONTENT } from "@/data/siteContent";
 import { PipelineExplorer } from "./PipelineExplorer";
 import { useMagneticPointer } from "@/hooks/useMagneticPointer";
+import { isReducedMotion, bindButtonBounce } from "@/lib/gsapHelpers";
 import {
   ClipboardList,
   Code2,
@@ -21,6 +24,10 @@ import {
   Sparkles,
   ArrowDown,
 } from "lucide-react";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 const STAGE_ICONS = [
   ClipboardList,
@@ -53,6 +60,7 @@ interface PipelineDialProps {
   className?: string;
   compact?: boolean;
   onActivate?: () => void;
+  onHoverStage?: (index: number | null) => void;
 }
 
 function PipelineDial({
@@ -60,6 +68,7 @@ function PipelineDial({
   className = "",
   compact = false,
   onActivate,
+  onHoverStage,
 }: PipelineDialProps) {
   const rawId = useId().replace(/:/g, "");
   const gradientId = `preview-dial-glow-${rawId}`;
@@ -149,14 +158,21 @@ function PipelineDial({
           strokeDasharray="6 6"
         />
 
-        {/* 8 Rotating wedges */}
+        {/* 8 Rotating wedges with HERO-04 hover interaction */}
         {PIPELINE_STAGES.map((stage, idx) => {
           const angle = idx * 45;
           const color = WEDGE_COLORS[idx];
           const isHighlighted = idx === activeIndex;
 
           return (
-            <g key={stage.id} transform={`rotate(${angle}, 700, 700)`}>
+            <g
+              key={stage.id}
+              transform={`rotate(${angle}, 700, 700)`}
+              onMouseEnter={() => onHoverStage?.(idx)}
+              onMouseLeave={() => onHoverStage?.(null)}
+              className="cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
+              style={{ transformOrigin: "700px 700px" }}
+            >
               <path
                 d={PREVIEW_WEDGE_PATH}
                 fill={isHighlighted ? color.main : "rgba(15, 23, 42, 0.75)"}
@@ -166,7 +182,7 @@ function PipelineDial({
                 filter={isHighlighted ? `url(#${filterId})` : undefined}
                 style={{
                   transition:
-                    "fill 0.6s ease, fill-opacity 0.6s ease, stroke 0.6s ease",
+                    "fill 0.4s ease, fill-opacity 0.4s ease, stroke 0.4s ease",
                 }}
               />
 
@@ -181,7 +197,7 @@ function PipelineDial({
                 letterSpacing={compact ? "2" : "3"}
                 className="select-none uppercase"
                 style={{
-                  transition: "fill 0.6s ease, font-size 0.6s ease",
+                  transition: "fill 0.4s ease, font-size 0.4s ease",
                   textShadow: isHighlighted
                     ? "0 0 20px rgba(255,255,255,0.8), 0 2px 10px rgba(0,0,0,0.9)"
                     : "0 2px 10px rgba(0,0,0,0.8)",
@@ -196,7 +212,7 @@ function PipelineDial({
                 r={isHighlighted ? 7 : 4}
                 fill={isHighlighted ? "#ffffff" : color.text}
                 fillOpacity={isHighlighted ? 1 : 0.4}
-                style={{ transition: "r 0.6s ease, fill-opacity 0.6s ease" }}
+                style={{ transition: "r 0.4s ease, fill-opacity 0.4s ease" }}
               />
             </g>
           );
@@ -251,21 +267,108 @@ function PipelineDial({
 export function InteractivePipeline() {
   const [isExplorerOpen, setIsExplorerOpen] = useState(false);
   const [activePreviewIndex, setActivePreviewIndex] = useState(0);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const ctaRef = useMagneticPointer<HTMLButtonElement>({ maxDisplacement: 5, strength: 0.25 });
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
+  const heroSectionRef = useRef<HTMLElement>(null);
+  const headlineRef = useRef<HTMLHeadingElement>(null);
+  const badgeRef = useRef<HTMLDivElement>(null);
+  const descRef = useRef<HTMLParagraphElement>(null);
+  const ctaGroupRef = useRef<HTMLDivElement>(null);
+  const primaryBtnRef = useRef<HTMLButtonElement>(null);
+  const wheelContainerRef = useRef<HTMLDivElement>(null);
+  const arrowCueRef = useRef<HTMLAnchorElement>(null);
+
+  const magneticBtnRef = useMagneticPointer<HTMLButtonElement>({ maxDisplacement: 5, strength: 0.25 });
+
+  // Auto-cycle through stages when not hovered
   useEffect(() => {
-    setIsLoaded(true);
-    // 64 seconds total rotation divided across 8 stages = 8s per stage
+    if (hoveredIndex !== null) return;
     const interval = setInterval(() => {
       setActivePreviewIndex((prev) => (prev + 1) % PIPELINE_STAGES.length);
     }, 8000);
     return () => clearInterval(interval);
+  }, [hoveredIndex]);
+
+  // Bind button bounce micro-interaction on primary CTA
+  useEffect(() => {
+    if (primaryBtnRef.current) {
+      return bindButtonBounce(primaryBtnRef.current, { enterScale: 1.03, duration: 0.2 });
+    }
   }, []);
+
+  // GSAP Entrance & Scroll-Scrub Timelines (HERO-01..07)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const ctx = gsap.context(() => {
+      const reduced = isReducedMotion();
+
+      if (reduced) {
+        gsap.set([badgeRef.current, headlineRef.current, descRef.current, ctaGroupRef.current, wheelContainerRef.current], {
+          opacity: 1,
+        });
+        return;
+      }
+
+      // Initial States
+      gsap.set(badgeRef.current, { y: 16, opacity: 0 });
+      gsap.set(headlineRef.current, { y: 24, opacity: 0 });
+      gsap.set(descRef.current, { y: 20, opacity: 0 });
+      gsap.set(ctaGroupRef.current, { y: 16, opacity: 0 });
+      gsap.set(wheelContainerRef.current, { scale: 0.92, rotate: -8, opacity: 0 });
+
+      // Master Hero Entrance Timeline
+      const heroTl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      heroTl
+        .to(badgeRef.current, { y: 0, opacity: 1, duration: 0.5 })
+        .to(headlineRef.current, { y: 0, opacity: 1, duration: 0.75 }, "-=0.3")
+        .to(descRef.current, { y: 0, opacity: 1, duration: 0.6 }, "-=0.45")
+        .to(ctaGroupRef.current, { y: 0, opacity: 1, duration: 0.5 }, "-=0.4")
+        .to(
+          wheelContainerRef.current,
+          { scale: 1, rotate: 0, opacity: 1, duration: 0.9, ease: "power3.out" },
+          0.1
+        );
+
+      // HERO-07: Continuous down arrow yoyo bob
+      if (arrowCueRef.current) {
+        const arrow = arrowCueRef.current.querySelector(".arrow-icon");
+        if (arrow) {
+          gsap.to(arrow, {
+            y: 4,
+            duration: 0.6,
+            ease: "sine.inOut",
+            repeat: -1,
+            yoyo: true,
+          });
+        }
+      }
+
+      // HERO-03: ScrollTrigger scroll-scrubbed rotation (+30deg)
+      if (heroSectionRef.current && wheelContainerRef.current) {
+        gsap.to(wheelContainerRef.current, {
+          rotate: 30,
+          ease: "none",
+          scrollTrigger: {
+            trigger: heroSectionRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+      }
+    }, heroSectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  const displayIndex = hoveredIndex !== null ? hoveredIndex : activePreviewIndex;
 
   return (
     <>
       <section
+        ref={heroSectionRef}
         id="pipeline"
         className="relative w-full overflow-x-clip bg-[#030712] text-white chapter-signal"
       >
@@ -282,29 +385,16 @@ export function InteractivePipeline() {
           {/* ═══ HERO CONTENT ═══ */}
           <div className="relative z-20 w-full max-w-2xl px-6 sm:px-10 lg:absolute lg:left-12 lg:px-0 xl:left-20">
             {/* Badge */}
-            <div
-              style={{
-                transitionDuration: "500ms",
-                transitionDelay: "100ms",
-              }}
-              className={`transition-all ${
-                isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-              }`}
-            >
-              <GlowBadge className="mb-6">
+            <div ref={badgeRef} className="mb-6">
+              <GlowBadge>
                 {SITE_CONTENT.hero.badge}
               </GlowBadge>
             </div>
 
-            {/* Headline */}
+            {/* Headline with Two-Tone Accent Hierarchy */}
             <h1
-              style={{
-                transitionDuration: "550ms",
-                transitionDelay: "200ms",
-              }}
-              className={`text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight mb-6 leading-[1.05] text-white transition-all ${
-                isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-              }`}
+              ref={headlineRef}
+              className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight mb-6 leading-[1.05] text-white"
             >
               {SITE_CONTENT.hero.headline}{" "}
               <span className="gradient-accent block">
@@ -314,34 +404,29 @@ export function InteractivePipeline() {
 
             {/* Description */}
             <p
-              style={{
-                transitionDuration: "550ms",
-                transitionDelay: "320ms",
-              }}
-              className={`text-[#94a3b8] text-sm sm:text-base leading-relaxed mb-8 max-w-xl transition-all ${
-                isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-              }`}
+              ref={descRef}
+              className="text-[#94a3b8] text-sm sm:text-base leading-relaxed mb-8 max-w-xl"
             >
               {SITE_CONTENT.hero.description}
             </p>
 
             {/* CTA Actions */}
             <div
-              style={{
-                transitionDuration: "550ms",
-                transitionDelay: "440ms",
-              }}
-              className={`flex flex-wrap items-center gap-4 mb-8 lg:mb-0 transition-all ${
-                isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-              }`}
+              ref={ctaGroupRef}
+              className="flex flex-wrap items-center gap-4 mb-8 lg:mb-0"
             >
               <button
-                ref={ctaRef}
+                ref={(node) => {
+                  primaryBtnRef.current = node;
+                  if (typeof magneticBtnRef === "object" && magneticBtnRef !== null) {
+                    (magneticBtnRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+                  }
+                }}
                 onClick={() => setIsExplorerOpen(true)}
                 data-cursor="cta"
                 className="hidden md:inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] text-[#030712] font-mono font-bold text-xs tracking-wider uppercase hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(56,189,248,0.5)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:outline-none group"
               >
-                <MousePointerClick className="w-4 h-4 animate-bounce group-hover:scale-110" />
+                <MousePointerClick className="w-4 h-4 group-hover:scale-110" />
                 EXPLORE PIPELINES
               </button>
 
@@ -364,19 +449,20 @@ export function InteractivePipeline() {
               </a>
 
               <a
+                ref={arrowCueRef}
                 href="#services"
                 data-cursor="interactive"
-                className="inline-flex items-center gap-1 text-xs font-mono text-[#64748b] hover:text-[#94a3b8] transition-colors underline underline-offset-4"
+                className="inline-flex items-center gap-1.5 text-xs font-mono text-[#64748b] hover:text-[#94a3b8] transition-colors underline underline-offset-4"
               >
                 <span>or scroll to services</span>
-                <ArrowDown className="w-3 h-3" />
+                <ArrowDown className="w-3 h-3 arrow-icon" />
               </a>
             </div>
 
             {/* ═══ MOBILE: Synchronized Stage Grid ═══ */}
             <div className="mt-6 flex flex-col items-center gap-5 md:hidden">
               <PipelineDial
-                activeIndex={activePreviewIndex}
+                activeIndex={displayIndex}
                 compact
                 className="h-[13rem] w-[13rem]"
               />
@@ -389,12 +475,13 @@ export function InteractivePipeline() {
                   {PIPELINE_STAGES.map((s, idx) => {
                     const Icon = STAGE_ICONS[idx] || ClipboardList;
                     const c = WEDGE_COLORS[idx];
-                    const isActive = idx === activePreviewIndex;
+                    const isActive = idx === displayIndex;
 
                     return (
                       <div
                         key={s.id}
-                        className={`p-3 rounded-xl border flex items-center gap-2.5 transition-all duration-300 ${
+                        onClick={() => setHoveredIndex(idx)}
+                        className={`p-3 rounded-xl border flex items-center gap-2.5 transition-all duration-300 cursor-pointer ${
                           isActive
                             ? "bg-[#0f172a] border-[#38bdf8]/60 shadow-[0_0_15px_rgba(56,189,248,0.25)]"
                             : "bg-[#0f172a]/60 border-[rgba(255,255,255,0.08)]"
@@ -424,19 +511,15 @@ export function InteractivePipeline() {
             </div>
           </div>
 
-          {/* ═══ TABLET & DESKTOP: Interactive Continuous Lifecycle Wheel ═══ */}
+          {/* ═══ TABLET & DESKTOP: Interactive Continuous Lifecycle Wheel (HERO-01..04) ═══ */}
           <div
-            style={{
-              transitionDuration: "700ms",
-              transitionDelay: "300ms",
-            }}
-            className={`hidden md:block mt-10 h-[min(52vw,390px)] w-[min(52vw,390px)] self-center z-10 lg:absolute lg:right-6 lg:top-1/2 lg:mt-0 lg:h-[390px] lg:w-[390px] lg:-translate-y-1/2 xl:right-16 xl:h-[460px] xl:w-[460px] transition-all ${
-              isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
-            }`}
+            ref={wheelContainerRef}
+            className="hidden md:block mt-10 h-[min(52vw,390px)] w-[min(52vw,390px)] self-center z-10 lg:absolute lg:right-6 lg:top-1/2 lg:mt-0 lg:h-[390px] lg:w-[390px] lg:-translate-y-1/2 xl:right-16 xl:h-[460px] xl:w-[460px]"
           >
             <PipelineDial
-              activeIndex={activePreviewIndex}
+              activeIndex={displayIndex}
               onActivate={() => setIsExplorerOpen(true)}
+              onHoverStage={(idx) => setHoveredIndex(idx)}
               className="w-full h-full"
             />
           </div>

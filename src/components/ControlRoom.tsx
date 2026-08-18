@@ -1,53 +1,117 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CONTROL_METRICS } from "@/data/controlRoomMetrics";
 import { SectionHeader } from "./atoms/SectionHeader";
 import { StatusDot } from "./atoms/StatusDot";
 import { MonoLabel } from "./atoms/MonoLabel";
-import { ScrollReveal } from "./interaction/ScrollReveal";
-import { useInViewOnce } from "@/hooks/useInViewOnce";
+import { isReducedMotion } from "@/lib/gsapHelpers";
 
-function AnimatedProgress({ percent }: { percent: number }) {
-  const [containerRef, isInView] = useInViewOnce<HTMLDivElement>({ threshold: 0.1 });
-  const [width, setWidth] = useState(0);
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+function MetricProgressBar({ percent, label }: { percent: number; label: string }) {
+  const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isInView) {
-      const timer = setTimeout(() => setWidth(percent), 150);
-      return () => clearTimeout(timer);
+    if (typeof window === "undefined" || !barRef.current) return;
+
+    if (isReducedMotion()) {
+      gsap.set(barRef.current, { width: `${percent}%` });
+      return;
     }
-  }, [isInView, percent]);
+
+    gsap.fromTo(
+      barRef.current,
+      { width: "0%" },
+      {
+        width: `${percent}%`,
+        duration: 0.8,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: barRef.current,
+          start: "top 85%",
+          once: true,
+        },
+      }
+    );
+  }, [percent]);
 
   return (
-    <div
-      ref={containerRef}
-      className="w-full h-2.5 bg-[#1e293b] rounded-full overflow-hidden p-0.5 border border-[rgba(255,255,255,0.05)]"
-    >
+    <div className="w-full h-2.5 bg-[#1e293b] rounded-full overflow-hidden p-0.5 border border-[rgba(255,255,255,0.05)]">
       <div
-        className="h-full bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(56,189,248,0.5)]"
-        style={{ width: `${width}%` }}
+        ref={barRef}
+        aria-label={`${label} progress: ${percent}%`}
+        className="h-full bg-gradient-to-r from-[#38bdf8] via-[#60a5fa] to-[#818cf8] rounded-full shadow-[0_0_10px_rgba(56,189,248,0.5)]"
+        style={{ width: "0%" }}
       />
     </div>
   );
 }
 
 export function ControlRoom() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const consoleCardRef = useRef<HTMLDivElement>(null);
+  const sheenBadgeRef = useRef<HTMLSpanElement>(null);
+
   const topMetrics = CONTROL_METRICS.filter((m) => !m.progressPercent);
   const barMetrics = CONTROL_METRICS.filter((m) => m.progressPercent !== undefined);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const ctx = gsap.context(() => {
+      // TELE-01: Console Card Entrance
+      if (consoleCardRef.current && !isReducedMotion()) {
+        gsap.from(consoleCardRef.current, {
+          y: 40,
+          opacity: 0,
+          duration: 0.7,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: consoleCardRef.current,
+            start: "top 80%",
+            once: true,
+          },
+        });
+      }
+
+      // TELE-03: Repeating sheen sweep on preview badge
+      if (sheenBadgeRef.current && !isReducedMotion()) {
+        const sheen = sheenBadgeRef.current.querySelector(".sheen-layer");
+        if (sheen) {
+          gsap.fromTo(
+            sheen,
+            { x: "-100%" },
+            {
+              x: "200%",
+              duration: 1.2,
+              ease: "power1.inOut",
+              repeat: -1,
+              repeatDelay: 3.5,
+            }
+          );
+        }
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section className="py-24 px-6 max-w-7xl mx-auto border-t border-[rgba(255,255,255,0.08)] chapter-confidence">
+    <section ref={sectionRef} className="py-24 px-6 max-w-7xl mx-auto border-t border-[rgba(255,255,255,0.08)] chapter-confidence">
       <SectionHeader
         label="SYSTEM TELEMETRY // CONTROL ROOM"
         title="Engineering Control Room"
         description="Illustrative delivery telemetry demonstrating the real-time operational visibility SRE builds into client delivery pipelines."
       />
 
-      <ScrollReveal
-        direction="up"
+      <div
+        ref={consoleCardRef}
         className="bg-[#0f172a] border border-[rgba(56,189,248,0.3)] rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl relative"
-        as="div"
       >
         {/* Header bar */}
         <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] bg-[#090d16]/80 flex flex-wrap items-center justify-between gap-4">
@@ -61,9 +125,15 @@ export function ControlRoom() {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="px-3 py-1 rounded-full bg-[#38bdf8]/10 border border-[#38bdf8]/30 text-[10px] font-mono text-[#7dd3fc]">
-              SAMPLE TELEMETRY PREVIEW
+            {/* TELE-03: Sheen Badge */}
+            <span
+              ref={sheenBadgeRef}
+              className="relative overflow-hidden px-3 py-1 rounded-full bg-[#38bdf8]/10 border border-[#38bdf8]/30 text-[10px] font-mono text-[#7dd3fc]"
+            >
+              <span className="relative z-10">SAMPLE TELEMETRY PREVIEW</span>
+              <span className="sheen-layer absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
             </span>
+
             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/30">
               <StatusDot status="healthy" pulse size="md" />
               <MonoLabel className="text-[#22c55e]">ALL SYSTEMS NOMINAL</MonoLabel>
@@ -71,7 +141,7 @@ export function ControlRoom() {
           </div>
         </div>
 
-        {/* Top metrics grid */}
+        {/* Top metrics grid (TELE-01) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-px bg-[rgba(255,255,255,0.06)]">
           {topMetrics.map((metric) => (
             <div
@@ -89,7 +159,7 @@ export function ControlRoom() {
           ))}
         </div>
 
-        {/* Progress bar metrics */}
+        {/* Progress bar metrics (TELE-02) */}
         <div className="p-6 sm:p-8 space-y-6 bg-[#090d16]/50">
           {barMetrics.map((metric) => (
             <div key={metric.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
@@ -99,7 +169,7 @@ export function ControlRoom() {
                   {metric.value}
                 </span>
                 <div className="flex-1">
-                  <AnimatedProgress percent={metric.progressPercent!} />
+                  <MetricProgressBar percent={metric.progressPercent!} label={metric.label} />
                 </div>
                 <MonoLabel className="text-[#38bdf8] w-12 text-right font-bold">
                   {metric.progressPercent}%
@@ -108,7 +178,7 @@ export function ControlRoom() {
             </div>
           ))}
         </div>
-      </ScrollReveal>
+      </div>
     </section>
   );
 }

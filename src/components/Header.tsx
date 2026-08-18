@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import gsap from "gsap";
 import { StatusDot } from "./atoms/StatusDot";
 import { MonoLabel } from "./atoms/MonoLabel";
-import { Menu, X, ArrowRight, Sparkles } from "lucide-react";
+import { Menu, X, ArrowRight, Sparkles, Sun, Moon } from "lucide-react";
 import { useMagneticPointer } from "@/hooks/useMagneticPointer";
+import { isReducedMotion } from "@/lib/gsapHelpers";
 
 const NAV_LINKS = [
   { name: "Pipeline", href: "#pipeline", id: "pipeline" },
@@ -18,10 +20,53 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("pipeline");
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
   const ctaRef = useMagneticPointer<HTMLAnchorElement>({ maxDisplacement: 4, strength: 0.2 });
+  const themeToggleRef = useRef<HTMLButtonElement>(null);
+  const themeIconRef = useRef<HTMLSpanElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-  // Scroll spy to highlight current active section
+  // Initialize theme from localStorage / system preference
+  useEffect(() => {
+    const storedTheme = localStorage.getItem("sre-theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = storedTheme ? storedTheme === "dark" : prefersDark;
+
+    setIsDarkMode(isDark);
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+    } else {
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  // Theme Toggle Handler with GSAP Rotation (Theme Toggle Transition)
+  const handleToggleTheme = () => {
+    const nextDark = !isDarkMode;
+    setIsDarkMode(nextDark);
+    localStorage.setItem("sre-theme", nextDark ? "dark" : "light");
+
+    if (nextDark) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+    } else {
+      document.documentElement.classList.add("light");
+      document.documentElement.classList.remove("dark");
+    }
+
+    if (themeIconRef.current && !isReducedMotion()) {
+      gsap.fromTo(
+        themeIconRef.current,
+        { rotate: 0, scale: 0.8 },
+        { rotate: 180, scale: 1, duration: 0.5, ease: "back.out(1.7)" }
+      );
+    }
+  };
+
+  // Scroll spy to highlight current active section (NAV-02)
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -43,7 +88,7 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Keyboard accessibility for mobile menu (Escape key and focus handling)
+  // Keyboard accessibility for mobile menu (Escape key)
   useEffect(() => {
     if (!mobileMenuOpen) return;
 
@@ -56,6 +101,19 @@ export function Header() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mobileMenuOpen]);
+
+  // Nav link hover underline helper (NAV-01 / Navigation Link Underline)
+  const handleNavHover = (e: React.MouseEvent<HTMLAnchorElement>, enter: boolean) => {
+    if (isReducedMotion()) return;
+    const underline = e.currentTarget.querySelector(".hover-underline");
+    if (!underline) return;
+
+    gsap.to(underline, {
+      width: enter ? "100%" : "0%",
+      duration: 0.3,
+      ease: enter ? "power2.out" : "power2.in",
+    });
+  };
 
   return (
     <>
@@ -75,7 +133,7 @@ export function Header() {
         <div
           className={`max-w-7xl mx-auto flex items-center justify-between px-5 py-3 sm:px-6 sm:py-3.5 rounded-2xl bg-[#0f172a]/85 border backdrop-blur-2xl transition-all duration-300 ${
             isScrolled
-              ? "border-[rgba(56,189,248,0.2)] shadow-[0_12px_36px_rgba(0,0,0,0.65),0_0_20px_rgba(56,189,248,0.06)]"
+              ? "border-[rgba(56,189,248,0.25)] shadow-[0_12px_36px_rgba(0,0,0,0.65),0_0_20px_rgba(56,189,248,0.06)]"
               : "border-[rgba(255,255,255,0.1)] shadow-[0_8px_32px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.03)_inset]"
           }`}
         >
@@ -99,7 +157,7 @@ export function Header() {
             </div>
           </a>
 
-          {/* Desktop Nav Links */}
+          {/* Desktop Nav Links (NAV-01) */}
           <nav
             aria-label="Main Navigation"
             className="hidden lg:flex items-center gap-1 xl:gap-2 px-3 py-1.5 rounded-xl bg-[#030712]/60 border border-[rgba(255,255,255,0.06)]"
@@ -111,26 +169,43 @@ export function Header() {
                   key={link.name}
                   href={link.href}
                   data-cursor="interactive"
+                  onMouseEnter={(e) => handleNavHover(e, true)}
+                  onMouseLeave={(e) => handleNavHover(e, false)}
                   className={`relative px-3.5 py-1.5 rounded-lg text-xs font-mono tracking-wider uppercase transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#38bdf8] ${
                     isActive
                       ? "text-[#38bdf8] font-bold bg-[#38bdf8]/12 shadow-[0_0_14px_rgba(56,189,248,0.18)] border border-[rgba(56,189,248,0.25)]"
                       : "text-[#94a3b8] hover:text-white hover:bg-white/[0.05] border border-transparent"
                   }`}
                 >
-                  {link.name}
-                  {isActive && (
-                    <span
-                      style={{ transition: "all 200ms cubic-bezier(0.4, 0, 0.2, 1)" }}
-                      className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#38bdf8] rounded-full shadow-[0_0_8px_#38bdf8]"
-                    />
-                  )}
+                  <span>{link.name}</span>
+                  {/* Hover Underline Expansion (Navigation Link Underline) */}
+                  <span
+                    className={`hover-underline absolute bottom-0.5 left-0 h-[2px] bg-[#38bdf8] rounded-full ${
+                      isActive ? "w-full" : "w-0"
+                    }`}
+                  />
                 </a>
               );
             })}
           </nav>
 
-          {/* CTA Button with Magnetic Pointer */}
-          <div className="hidden lg:flex items-center gap-4">
+          {/* CTA & Theme Toggle */}
+          <div className="hidden lg:flex items-center gap-3">
+            {/* Theme Toggle Button (Theme Toggle Transition) */}
+            <button
+              ref={themeToggleRef}
+              id="theme-toggle"
+              onClick={handleToggleTheme}
+              data-cursor="interactive"
+              aria-label={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
+              className="p-2.5 rounded-xl bg-[#090d16] border border-[rgba(255,255,255,0.08)] text-[#94a3b8] hover:text-[#38bdf8] hover:border-[#38bdf8]/40 hover:bg-[#38bdf8]/10 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#38bdf8] focus-visible:outline-none"
+            >
+              <span ref={themeIconRef} className="inline-block">
+                {isDarkMode ? <Sun className="w-4 h-4 text-[#f59e0b]" /> : <Moon className="w-4 h-4 text-[#818cf8]" />}
+              </span>
+            </button>
+
+            {/* Initiate Pipeline CTA */}
             <a
               ref={ctaRef}
               href="#contact"
@@ -142,15 +217,25 @@ export function Header() {
             </a>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-expanded={mobileMenuOpen}
-            aria-label="Toggle Navigation Menu"
-            className="lg:hidden text-[#94a3b8] hover:text-white p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] rounded-xl bg-[#090d16]/70 border border-[rgba(255,255,255,0.08)] cursor-pointer transition-colors"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          {/* Mobile Actions: Theme Toggle + Menu Button */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <button
+              onClick={handleToggleTheme}
+              aria-label={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
+              className="p-2 text-[#94a3b8] hover:text-white rounded-xl bg-[#090d16]/70 border border-[rgba(255,255,255,0.08)] cursor-pointer"
+            >
+              {isDarkMode ? <Sun className="w-4 h-4 text-[#f59e0b]" /> : <Moon className="w-4 h-4 text-[#818cf8]" />}
+            </button>
+
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-expanded={mobileMenuOpen}
+              aria-label="Toggle Navigation Menu"
+              className="text-[#94a3b8] hover:text-white p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8] rounded-xl bg-[#090d16]/70 border border-[rgba(255,255,255,0.08)] cursor-pointer transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Nav Overlay */}
