@@ -32,10 +32,6 @@ export function BackgroundCanvas() {
     let animationFrameId: number;
     let particles: TelemetryParticle[] = [];
     let time = 0;
-    const particleCount = Math.min(
-      52,
-      Math.floor((window.innerWidth * window.innerHeight) / 28000)
-    );
 
     // Color maps: Cyan, Purple/Violet, Indigo, Emerald
     const colorPairs = [
