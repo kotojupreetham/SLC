@@ -64,14 +64,15 @@ export function BackgroundCanvas() {
       let perfMultiplier = 1;
       try {
         // deviceMemory (GB) and hardwareConcurrency (logical cores) are good heuristics
-        // Lower resource devices get a reduced multiplier
-        const mem = (navigator as any).deviceMemory || 8;
-        const cores = navigator.hardwareConcurrency || 4;
+        // Use typed access without 'any' to satisfy lint rules
+        const navTyped = navigator as unknown as { deviceMemory?: number };
+        const mem = navTyped.deviceMemory ?? 8;
+        const cores = navigator.hardwareConcurrency ?? 4;
         if (mem <= 2) perfMultiplier *= 0.45;
         else if (mem <= 4) perfMultiplier *= 0.7;
         if (cores <= 2) perfMultiplier *= 0.6;
         else if (cores <= 4) perfMultiplier *= 0.8;
-      } catch (e) {
+      } catch {
         // ignore if APIs not available
       }
 
