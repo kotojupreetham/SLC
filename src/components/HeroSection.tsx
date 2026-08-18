@@ -56,7 +56,7 @@ export function HeroSection() {
         connectTl.to(contentRef.current, { y: -60, opacity: 0.18, scale: 0.98, ease: 'none' }, 0)
           .fromTo(services, { y: 30, opacity: 0 }, { y: 0, opacity: 1, ease: 'none' }, 0);
       }
-    } catch (e) {
+    } catch {
       // noop
     }
 
@@ -64,7 +64,7 @@ export function HeroSection() {
       try {
         connectTl?.kill();
         ScrollTrigger.getAll().forEach((st) => st.kill());
-      } catch (e) {
+      } catch {
         // noop
       }
     };
