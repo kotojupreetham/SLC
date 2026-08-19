@@ -69,6 +69,15 @@
   --font-mono: "Cascadia Code", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
+/* Accessibility overrides for existing arbitrary Tailwind color utilities used in code
+   These map legacy hex-embedded classes (e.g. text-[#94a3b8]) to the design token --muted
+   so contrast improvements flow from the theme tokens without editing many files. */
+.text-\[\#94a3b8\] { color: var(--muted) !important; }
+.text-\[\#64748b\] { color: var(--muted) !important; }
+.text-\[\#5b6472\] { color: var(--muted) !important; }
+.text-\[\#94a3b8\]:hover { color: var(--muted) !important; }
+
+
 .light {
   --background: #f7f8fa;
   --background-elevated: #ffffff;
@@ -78,7 +87,7 @@
   --border: #dde2e8;
   --border-strong: #2563eb;
   --foreground: #12161c;
-  --foreground-muted: #5b6472;
+  --foreground-muted: #374151;
   --foreground-subtle: #71717a;
   --accent: #2563eb;
   --accent-secondary: #7c3aed;
