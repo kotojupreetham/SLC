@@ -80,6 +80,9 @@ export default function Home() {
       <div aria-hidden className="ambient-orb orb-1" />
       <div aria-hidden className="ambient-orb orb-2" />
 
+      {/* Page title for accessibility (visually hidden) */}
+      <h1 className="sr-only">SMARTER RELEASE ENGINEERING — Enterprise Delivery Platforms</h1>
+
       {/* Sticky Header Navbar */}
       <Header />
       {/* Header spacer to prevent content overlap with fixed header */}
