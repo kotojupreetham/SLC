@@ -10,7 +10,7 @@
   --border: #1e2836;
   --border-strong: #38bdf8;
   --foreground: #f8fafc;
-  --foreground-muted: #94a3b8;
+  --foreground-muted: #cbd5e1;
   --foreground-subtle: #64748b;
   --accent: #38bdf8;
   --accent-secondary: #818cf8;
@@ -69,6 +69,26 @@
   --font-mono: "Cascadia Code", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
+/* Accessibility overrides for existing arbitrary Tailwind color utilities used in code
+   These map legacy hex-embedded classes (e.g. text-[#94a3b8]) to accessible design tokens
+   so contrast improvements flow from the theme tokens without editing many files. */
+.text-\[\#94a3b8\] { color: var(--foreground-muted) !important; }
+.text-\[\#64748b\] { color: var(--foreground-muted) !important; }
+.text-\[\#5b6472\] { color: var(--foreground-muted) !important; }
+.text-\[\#94a3b8\]:hover { color: var(--foreground-muted) !important; }
+
+/* Additional legacy hex utility mappings (fix low-contrast pills, badges, footer text) */
+.text-\[\#475569\] { color: var(--foreground-muted) !important; }
+.text-\[\#a5b4fc\] { color: var(--foreground-muted) !important; }
+.text-\[\#c4b5fd\] { color: var(--foreground-muted) !important; }
+.text-\[\#94a3b8\] { color: var(--foreground-muted) !important; }
+
+/* Map legacy arbitrary background to tokenized surface for better readability on dark theme */
+.bg-\[\#1e293b\] { background-color: var(--surface-secondary) !important; }
+.bg-\[\#1e293b\]\/80 { background-color: color-mix(in srgb, var(--surface-secondary) 80%, transparent) !important; }
+.bg-\[\#1e293b\]\/70 { background-color: color-mix(in srgb, var(--surface-secondary) 70%, transparent) !important; }
+
+
 .light {
   --background: #f7f8fa;
   --background-elevated: #ffffff;
@@ -78,7 +98,7 @@
   --border: #dde2e8;
   --border-strong: #2563eb;
   --foreground: #12161c;
-  --foreground-muted: #5b6472;
+  --foreground-muted: #374151;
   --foreground-subtle: #71717a;
   --accent: #2563eb;
   --accent-secondary: #7c3aed;

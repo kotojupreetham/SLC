@@ -1,0 +1,33 @@
+name: Pa11y Accessibility Scan
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ 'followup/accessibility-audit' ]
+
+jobs:
+  pa11y:
+    name: Run pa11y scanner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Run pa11y against deployed preview
+        env:
+          TARGET_URL: https://slc-sand.vercel.app/
+        run: |
+          echo "Scanning $TARGET_URL with pa11y..."
+          # Use npx to avoid adding dependencies to the repo
+          npx pa11y $TARGET_URL --reporter html > pa11y-report.html || true
+
+      - name: Upload pa11y HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pa11y-report
+          path: pa11y-report.html

@@ -368,7 +368,7 @@ export function InteractivePipeline() {
             </div>
 
             {/* Headline with Two-Tone Accent Hierarchy */}
-            <h1
+            <h2
               ref={headlineRef}
               className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight mb-6 leading-[1.05] text-white"
             >
@@ -376,7 +376,7 @@ export function InteractivePipeline() {
               <span className="gradient-accent block">
                 {SITE_CONTENT.hero.headlineAccent}
               </span>
-            </h1>
+            </h2>
 
             {/* Description */}
             <p
