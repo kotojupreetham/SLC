@@ -44,7 +44,11 @@ function MetricProgressBar({ percent, label }: { percent: number; label: string 
     <div className="w-full h-2.5 bg-[#1e293b] rounded-full overflow-hidden p-0.5 border border-[rgba(255,255,255,0.05)]">
       <div
         ref={barRef}
-        aria-label={`${label} progress: ${percent}%`}
+        role="progressbar"
+        aria-label={`${label} progress`}
+        aria-valuenow={percent}
+        aria-valuemin={0}
+        aria-valuemax={100}
         className="h-full bg-gradient-to-r from-[#38bdf8] via-[#818cf8] to-[#a855f7] rounded-full shadow-[0_0_12px_rgba(56,189,248,0.5),0_0_8px_rgba(168,85,247,0.3)]"
         style={{ width: "0%" }}
       />

@@ -111,7 +111,7 @@ export function TechEcosystem() {
                   <StatusDot status={isActive ? "accent" : "healthy"} pulse={isActive} size="md" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-white mb-1 tracking-tight group-hover:text-[#38bdf8] transition-colors">
+                  <h3 className="text-lg font-bold text-white mb-1 tracking-tight group-hover:text-[#38bdf8] transition-colors">
                     {node.name}
                   </h4>
                   <MonoLabel className="text-[#818cf8]">{node.pipelineStage}</MonoLabel>
