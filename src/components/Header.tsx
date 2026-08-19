@@ -89,7 +89,12 @@ export function Header() {
 
   // Keyboard accessibility and focus management for mobile menu
   useEffect(() => {
+    // Track the element that had focus before opening so we can restore it
+    let previousActive: Element | null = null;
+
     if (!mobileMenuOpen) return;
+
+    previousActive = document.activeElement;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -99,13 +104,25 @@ export function Header() {
 
     window.addEventListener("keydown", handleKeyDown);
 
+    // Prevent background scroll while menu is open
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     // Focus first link in mobile menu for keyboard users
     if (mobileMenuRef.current) {
       const firstLink = mobileMenuRef.current.querySelector('a');
       (firstLink as HTMLElement | null)?.focus();
     }
 
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      // Restore scroll behavior
+      document.body.style.overflow = originalOverflow;
+      // Restore previously focused element
+      if (previousActive && (previousActive as HTMLElement).focus) {
+        try { (previousActive as HTMLElement).focus(); } catch { /* noop */ }
+      }
+    };
   }, [mobileMenuOpen]);
 
   return (
