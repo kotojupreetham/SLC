@@ -113,7 +113,7 @@ export function TechEcosystem() {
                 <div>
                   <h3 className="text-lg font-bold text-white mb-1 tracking-tight group-hover:text-[#38bdf8] transition-colors">
                     {node.name}
-                  </h4>
+                                    </h3>
                   <MonoLabel className="text-[#818cf8]">{node.pipelineStage}</MonoLabel>
                 </div>
               </button>
