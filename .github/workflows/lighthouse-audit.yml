@@ -1,0 +1,38 @@
+name: Lighthouse Accessibility Audit
+
+on:
+  push:
+    branches: [followup/accessibility-audit]
+  workflow_dispatch: {}
+
+jobs:
+  lighthouse:
+    name: Lighthouse audit (headless)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Lighthouse (desktop)
+        run: |
+          mkdir -p artifacts
+          npx --yes chrome-launcher@0.15.2 >/dev/null 2>&1 || true
+          npx --yes lighthouse https://slc-sand.vercel.app --quiet --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output html --output-path=artifacts/lh-desktop.html || true
+
+      - name: Run Lighthouse (mobile)
+        run: |
+          npx --yes lighthouse https://slc-sand.vercel.app --quiet --emulated-form-factor=mobile --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" --output html --output-path=artifacts/lh-mobile.html || true
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: artifacts/*.html
